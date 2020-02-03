@@ -22,29 +22,57 @@ Answer:
 import os
 import glob
 import numpy as np
+import pandas as pd
 
 from sklearn.model_selection import train_test_split
+from sklearn.svm import LinearSVC
 
 dataset_directory = '.\\dataset'
 
 path = os.listdir(dataset_directory)
 
+
 '''
-Get labels from the list of all labels
-Saved as var labels in the form of an np.array
+Reading the data using pandas dataframe
+
 '''
 
-labels = np.array([l.strip('\n').split('\t') for l in open(os.path.join(dataset_directory, 'concepts_2011.txt'))])
-image_labels = np.array([i.strip('\n').split('.jpg ') for i in open(os.path.join(dataset_directory, 'trainset_gt_annotations.txt'))])
+labels = pd.read_csv(os.path.join(dataset_directory, 'concepts_2011.txt'), sep="\t")
+image_labels = pd.read_csv(os.path.join(dataset_directory, 'trainset_gt_annotations.txt'), sep=" ", header=None)
+
+image_labels[0] = image_labels[0].map(lambda x: x.strip('.jpg'))
 
 list_of_features = [os.path.join(os.path.join(dataset_directory,"imageclef2011_feats") , file) for file in os.listdir(os.path.join(dataset_directory,"imageclef2011_feats")) if file.endswith(".npy") ]
+
+'''
+Features for x
+'''
+
 x = np.array([np.load(feat) for feat in list_of_features])
 
-'''
-Splitting the dataset to 60-15-25
 
 '''
+Splitting the dataset to 60-15-25 per class
+'''
 
-x_train, x_test, y_train, y_test = train_test_split()
 
-x_train, x_val, y_train, y_val = train_test_split()
+
+'''
+SVM
+'''
+
+
+from sklearn.svm import SVC
+from sklearn.multiclass import OneVsRestClassifier
+
+regularization_constants = [0.01, 0.1, 0.1**0.5, 1, 10**0.5, 10, 100**0.5]
+scores = []
+
+for c in regularization_constants:
+    svm = OneVsRestClassifier(estimator=SVC(C=c, kernel="linear"))
+    svm.fit(x_train, y_train)
+    scores.append(svm.score(x_val, y_val))
+    
+best_c = regularization_constants[np.argmax(scores)]
+best_score = np.max(scores)
+print("Best pair | c={}, score={}".format(best_c, best_score))
