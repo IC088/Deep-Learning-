@@ -31,24 +31,42 @@ dataset_directory = '.\\dataset'
 
 path = os.listdir(dataset_directory)
 
+'''
+Data Preprocessing:
+
+Filter out the unnecessary data from the original dataset for training in the following parts
 
 '''
-Reading the data using pandas dataframe
+filename = ['concepts_2011.txt', 'trainset_gt_annotations.txt']
 
 '''
+funciton preprocess for 
 
-labels = pd.read_csv(os.path.join(dataset_directory, 'concepts_2011.txt'), sep="\t")
-image_labels = pd.read_csv(os.path.join(dataset_directory, 'trainset_gt_annotations.txt'), sep=" ", header=None)
-
-image_labels[0] = image_labels[0].map(lambda x: x.strip('.jpg'))
-
-list_of_features = [os.path.join(os.path.join(dataset_directory,"imageclef2011_feats") , file) for file in os.listdir(os.path.join(dataset_directory,"imageclef2011_feats")) if file.endswith(".npy") ]
-
-'''
-Features for x
+Input: dataset annotations in csv/txt format as provided by the 
 '''
 
-x = np.array([np.load(feat) for feat in list_of_features])
+
+def preprocess(dataset, reference, start=10, end=14):
+	labels = pd.read_csv(os.path.join(dataset_directory, reference), sep="\t")
+	image_labels = pd.read_csv(os.path.join(dataset_directory, dataset), sep=" ", header=None)
+	image_label = image_labels.drop(columns = [i for i in range(1,start)])
+	image_label = image_label.drop(columns = [i for i in range(end,len(image_labels.columns))])
+	image_label.columns = ['image', 'spring','summer', 'autumn', 'winter']
+	image_label_spring = image_label[image_label.spring != 0]
+	image_label_summer = image_label[image_label.summer != 0]
+	image_label_autumn = image_label[image_label.autumn != 0]
+	image_label_winter = image_label[image_label.winter != 0]
+	image_label_data = pd.concat([image_label_spring, image_label_summer, image_label_autumn, image_label_winter]).drop_duplicates()
+	return image_label_data
+
+
+y = preprocess(filename[1], filename[0])
+
+print(y)
+'''
+Getting training
+'''
+
 
 
 '''
@@ -60,19 +78,3 @@ Splitting the dataset to 60-15-25 per class
 '''
 SVM
 '''
-
-
-from sklearn.svm import SVC
-from sklearn.multiclass import OneVsRestClassifier
-
-regularization_constants = [0.01, 0.1, 0.1**0.5, 1, 10**0.5, 10, 100**0.5]
-scores = []
-
-for c in regularization_constants:
-    svm = OneVsRestClassifier(estimator=SVC(C=c, kernel="linear"))
-    svm.fit(x_train, y_train)
-    scores.append(svm.score(x_val, y_val))
-    
-best_c = regularization_constants[np.argmax(scores)]
-best_score = np.max(scores)
-print("Best pair | c={}, score={}".format(best_c, best_score))
