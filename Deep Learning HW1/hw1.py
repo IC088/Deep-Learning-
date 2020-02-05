@@ -141,30 +141,30 @@ splitting the dataset to find the optimal c
 '''
 y = target.drop(columns=['image']) #drop the image id since its no longer needed after the preprocessing to get the relevant features
 x_train, x_test, x_val, y_train, y_test, y_val = split(x,y)
-# if not os.path.exists(f'splits'):
-# 	os.mkdir(f'splits')
-# else:
-# 	print('Folder exists, replacing the old values with the new one.')
-# save(x_train, x_test, x_val, y_train, y_test, y_val) # save the required data to .npy files. This can be found in the newly created splits folder
+if not os.path.exists(f'splits'):
+	os.mkdir(f'splits')
+else:
+	print('Folder exists, replacing the old values with the new one.')
+save(x_train, x_test, x_val, y_train, y_test, y_val) # save the required data to .npy files. This can be found in the newly created splits folder
 '''
 Finding optimal c
 '''
 
-# for season in seasons:
-# 	scores = []
-# 	for c in regularization_constants:
-# 		svm = SVC(C=c, kernel = 'linear', probability=True)
-# 		svm.fit(x_train,y_train[season])
+for season in seasons:
+	scores = []
+	for c in regularization_constants:
+		svm = SVC(C=c, kernel = 'linear', probability=True)
+		svm.fit(x_train,y_train[season])
 
-# 		'''
-# 		Analyse best c by calculating the class wise accuracy
-# 		'''
-# 		y_pred_class = svm.predict(x_val)
+		'''
+		Analyse best c by calculating the class wise accuracy
+		'''
+		y_pred_class = svm.predict(x_val)
 
-# 		acc = class_wise_accuracy(y_pred_class, y_val[season])
-# 		scores.append(acc)
+		acc = class_wise_accuracy(y_pred_class, y_val[season])
+		scores.append(acc)
 
-# 	print(f'best c for {season} = {regularization_constants[np.argmax(scores)]} with score: {np.max(scores)}')
+	print(f'best c for {season} = {regularization_constants[np.argmax(scores)]} with score: {np.max(scores)}')
 
 
 '''
@@ -215,4 +215,4 @@ y_test_vanilla = np.array(y_test).flatten()
 vanilla_Acc = class_wise_accuracy(y_prelim_pred, y_test_vanilla)
 
 
-print(vanilla_Acc)
+print(f'vanilla accuracy = {vanilla_Acc}')
