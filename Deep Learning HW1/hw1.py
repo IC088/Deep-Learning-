@@ -111,7 +111,9 @@ seasons =  ['spring','summer', 'autumn', 'winter']
 # class_total = {'spring': spring_shape,'summer': summer_shape, 'autumn': autumn_shape,'winter': winter_shape}
 regularization_constants = [0.01, 0.1, 0.1**0.5, 1, 10**0.5, 10, 100**0.5]
 #regularization_constants = [0.01]
-best_c_list, average_score = [], []
+
+
+regu_dict = { 0.01: [], 0.1: [], 0.1**0.5: [], 1: [], 10**0.5: [], 10: [], 100**0.5: []  }
 
 
 
@@ -129,8 +131,6 @@ for season in seasons:
 	'''
 
 	x_train, x_test, x_val, y_train, y_test, y_val = split(x,y)
-	#print(f'x_train.shape: {x_train.shape}, x_test_shape: {x_test.shape}, x_val.shape: {x_val.shape}')
-	#print(y_train.shape, y_test.shape, y_val.shape)
 
 	if not os.path.exists(f'splits\\{season}'):
 		os.mkdir(f'splits\\{season}')
@@ -145,7 +145,6 @@ for season in seasons:
 	for c in regularization_constants:
 		svm = SVC(C=c, kernel = 'linear', probability=True)
 		svm.fit(x_train,y_train)
-		#print(f'constant {i}, season: {season}, score: {svm.score(x_val, y_val)}')
 
 		'''
 		Analyse best c by calculating the class wise advantage
@@ -154,32 +153,58 @@ for season in seasons:
 
 		acc = class_wise_accuracy(y_pred, y_val)
 		scores.append(acc)
-		# print(f'c = {c}, season = {season}, y_pred = {y_pred}')
-# 		scores.append(svm.score(x_val, y_val))
-	best_c = regularization_constants[np.argmax(scores)]
-	best_score = np.max(scores)
-	print(f'best c: {best_c}, best accuracy: {best_score}')
-# 	average_score.append(best_score)
-# 	best_c_list.append(best_c)
+		regu_dict[c].append(acc)
 
+for i in regu_dict:
+	print(f'constant {i} :  averaged accuracy: {np.mean(regu_dict[i])}')
 
 
 '''
 Conclusion best c is 0.01
 '''
 
-final_acc = []
+# y_pred = []
+
+# seasons = ['spring']
+
 
 # for season in seasons:
-y = target
-x_train, x_test, x_val, y_train, y_test, y_val = split(x,y)
-x_train_val = np.concatenate((x_train, x_val))
-y_train_val = np.concatenate((y_train, y_val))
-svm = SVC(C=best_c, kernel = 'linear', probability=True)
-svm.fit(x_train_val, y_train_val)
-y_pred = svm.predict_proba(x_test)
+# 	y = target[season]
+# 	# y = y.drop(columns = ['image'])
 
-print(y_pred)
+# 	x_train, x_test, x_val, y_train, y_test, y_val = split(x,y)
+# 	x_train_val = np.concatenate((x_train, x_val))
+# 	y_train_val = np.concatenate((y_train, y_val))
+
+# 	svm = SVC(C=0.01, kernel = 'linear', probability=True)
+# 	svm.fit(x_train_val, y_train_val)
+
+# 	# Get probability that it is true for designated season
+
+
+# 	prelim_pred = svm.predict_proba(x_test)[:,1] # returns probability for  0: index 0, 1: index 1
+
+# 	print(prelim_pred)
+	# prelim_pred = svm.predict_proba(x_test)[:,1]
+
+	# print(y_test)
+	# acc = class_wise_accuracy(prelim_pred, y_test)
+
+	# print(f'{season} : {acc}')
+
+	# y_pred.append(prelim_pred)
+
+# y_pred = np.vstack(y_pred)
+
+
+# print(y_pred.transpose())
+
+# print(y_pred)
+# print(f'{season} : {y_pred}')
+
+# print(y_pred)
+
+# print(y_pred)
 
 # 	c_acc = class_wise_accuracy(y_pred, y_test)
 # 	print(f'{season} accuracy: {c_acc}')
