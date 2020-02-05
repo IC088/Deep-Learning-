@@ -16,8 +16,6 @@ Why I asked you to split class-wise ?
 Explain in at most 5 sentences.
 
 
-
-
 '''
 
 import os
@@ -29,6 +27,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
+
+
+
+from sklearn.metrics import accuracy_score
 
 dataset_directory = '.\\dataset'
 
@@ -52,12 +54,11 @@ Input: 	dataset = dataset annotations in csv/txt format as provided by the proje
 		start = indicate which column should be left in dataset by default is 10 for spring
 		end = indicate which column should be left in dataset by default is 14 for winter
 
-Ouput:
-
 Returns
 
 x : training data from the dataset
 image_label_data : target (true labels of the classification)
+
 '''
 
 
@@ -82,8 +83,9 @@ def preprocess(dataset, reference, start=10, end=14):
 function is used to split the train, test, val from the dataset
 according to the requirement: 60 (train) - 15(test) - 25 (val)
 
-Input: 	x = training set
-		y = target set
+Input: 	
+x : training set in numpy array for later use
+y : target set in pandas dataframe format for later use
 
 '''
 def split(x,y):
@@ -92,155 +94,125 @@ def split(x,y):
 	return x_train, x_test, x_val, y_train, y_test, y_val
 
 '''
-function is used to calculate the defined class wise accuracy. Since the propcessing for the dataset is 
+Function is used to calculate the defined class wise accuracy. Since the propcessing for the dataset is 
+Input:
+
+y_pred : the predicted values of y from the model
+y : labelled values of y from the dataset
+
+Returns:
+
+c_accuracy : 1/(total number of elements in the class)
 '''
 
 
 def class_wise_accuracy(y_pred, y):
-	# accuracy = np.sum(y_pred == y)
-	return np.sum(y_pred == y) /np.array(y).shape
+	c_accuracy = np.sum(y_pred == y) /np.array(y).shape
+	return c_accuracy
 
 
+def save(x_train, x_test, x_val, y_train, y_test, y_val):
+	np.save(f'splits\\x_train.npy', x_train)
+	np.save(f'splits\\x_val.npy', x_val)
+	np.save(f'splits\\x_test.npy', x_test)
+	np.save(f'splits\\y_train.npy', y_train)
+	np.save(f'splits\\y_val.npy', y_val)
+	np.save(f'splits\\y_test.npy', y_test)
+	print('Features Saved!')
 
+
+def load():
+	x_train = np.load(f'splits\\x_train.npy')
+	x_val = np.load(f'splits\\x_val.npy' )
+	x_test = np.load(f'splits\\x_test.npy' )
+	y_train = np.load(f'splits\\y_train.npy' )
+	y_val = np.load(f'splits\\y_val.npy' )
+	y_test = np.load(f'splits\\y_test.npy')
+	return x_train, x_test, x_val, y_train, y_test, y_val
 
 x, target = preprocess(filename[1], filename[0])
 
 seasons =  ['spring','summer', 'autumn', 'winter']
 
-#seasons = ['spring']
-# class_total = {'spring': spring_shape,'summer': summer_shape, 'autumn': autumn_shape,'winter': winter_shape}
 regularization_constants = [0.01, 0.1, 0.1**0.5, 1, 10**0.5, 10, 100**0.5]
-#regularization_constants = [0.01]
 
+'''
+splitting the dataset to find the optimal c
+'''
+y = target.drop(columns=['image']) #drop the image id since its no longer needed after the preprocessing to get the relevant features
+x_train, x_test, x_val, y_train, y_test, y_val = split(x,y)
+# if not os.path.exists(f'splits'):
+# 	os.mkdir(f'splits')
+# else:
+# 	print('Folder exists, replacing the old values with the new one.')
+# save(x_train, x_test, x_val, y_train, y_test, y_val) # save the required data to .npy files. This can be found in the newly created splits folder
+'''
+Finding optimal c
+'''
 
-regu_dict = { 0.01: [], 0.1: [], 0.1**0.5: [], 1: [], 10**0.5: [], 10: [], 100**0.5: []  }
+# for season in seasons:
+# 	scores = []
+# 	for c in regularization_constants:
+# 		svm = SVC(C=c, kernel = 'linear', probability=True)
+# 		svm.fit(x_train,y_train[season])
 
+# 		'''
+# 		Analyse best c by calculating the class wise accuracy
+# 		'''
+# 		y_pred_class = svm.predict(x_val)
 
+# 		acc = class_wise_accuracy(y_pred_class, y_val[season])
+# 		scores.append(acc)
 
+# 	print(f'best c for {season} = {regularization_constants[np.argmax(scores)]} with score: {np.max(scores)}')
 
 
 '''
-Deciding the best c for each train score
+Conclusion c should be 0.01 since it gives out maximum value
 '''
+
+'''
+SVM: calculate the accuracy of the model
+'''
+
+x_train_val = np.concatenate((x_train, x_val)) # combine both training and validation set for x
+y_train_val = pd.concat((y_train, y_val)) # combine both training and validation set for y
+c_averaged = [] 
+c_concat = []
 
 for season in seasons:
-	y = target[season]
-	scores = []
-	'''
-	Splitting the dataset to 60-15-25 per class
-	'''
+	svm = SVC(C=0.01, kernel = 'linear', probability=True)
+	svm.fit(x_train_val,y_train_val[season]) # Create model based on the new combined training set
+	c_prelim_pred_prob = svm.predict_proba(x_test)
+	c_concat.append(c_prelim_pred_prob[:,1])
+	c_prelim_pred = np.zeros_like(c_prelim_pred_prob)
+	c_prelim_pred[np.arange(len(c_prelim_pred_prob)), c_prelim_pred_prob.argmax(1)] = 1
+	c_acc = class_wise_accuracy(c_prelim_pred[:,1],  y_test[season])
+	c_averaged.append(c_acc)
+	print(f'{season} has class acc = {c_acc}')
 
-	x_train, x_test, x_val, y_train, y_test, y_val = split(x,y)
-
-	if not os.path.exists(f'splits\\{season}'):
-		os.mkdir(f'splits\\{season}')
-
-	np.save(f'splits\\{season}\\x_train.npy', x_train)
-	np.save(f'splits\\{season}\\x_val.npy', x_val)
-	np.save(f'splits\\{season}\\x_test.npy', x_test)
-	np.save(f'splits\\{season}\\y_train.npy', y_train)
-	np.save(f'splits\\{season}\\y_val.npy', y_val)
-	np.save(f'splits\\{season}\\y_test.npy', y_test)
-	
-	for c in regularization_constants:
-		svm = SVC(C=c, kernel = 'linear', probability=True)
-		svm.fit(x_train,y_train)
-
-		'''
-		Analyse best c by calculating the class wise advantage
-		'''
-		y_pred = svm.predict(x_val)
-
-		acc = class_wise_accuracy(y_pred, y_val)
-		scores.append(acc)
-		regu_dict[c].append(acc)
-
-for i in regu_dict:
-	print(f'constant {i} :  averaged accuracy: {np.mean(regu_dict[i])}')
+'''
+Calculating the average class wise accuracy
+'''
+c_averaged = np.mean(c_averaged)
+print(f'Overall average class wise accuracy = {c_averaged}')
 
 
 '''
-Conclusion best c is 0.01
+predict using vanilla accuracy
 '''
 
-# y_pred = []
+y_vanilla_pred = np.array(c_concat).transpose()
 
-# seasons = ['spring']
+y_prelim_pred = np.zeros_like(y_vanilla_pred)
 
+y_prelim_pred[np.arange(len(y_vanilla_pred )), y_vanilla_pred.argmax(1)] = 1
+y_prelim_pred = y_prelim_pred.flatten()
 
-# for season in seasons:
-# 	y = target[season]
-# 	# y = y.drop(columns = ['image'])
-
-# 	x_train, x_test, x_val, y_train, y_test, y_val = split(x,y)
-# 	x_train_val = np.concatenate((x_train, x_val))
-# 	y_train_val = np.concatenate((y_train, y_val))
-
-# 	svm = SVC(C=0.01, kernel = 'linear', probability=True)
-# 	svm.fit(x_train_val, y_train_val)
-
-# 	# Get probability that it is true for designated season
+y_test_vanilla = np.array(y_test).flatten()
 
 
-# 	prelim_pred = svm.predict_proba(x_test)[:,1] # returns probability for  0: index 0, 1: index 1
-
-# 	print(prelim_pred)
-	# prelim_pred = svm.predict_proba(x_test)[:,1]
-
-	# print(y_test)
-	# acc = class_wise_accuracy(prelim_pred, y_test)
-
-	# print(f'{season} : {acc}')
-
-	# y_pred.append(prelim_pred)
-
-# y_pred = np.vstack(y_pred)
+vanilla_Acc = class_wise_accuracy(y_prelim_pred, y_test_vanilla)
 
 
-# print(y_pred.transpose())
-
-# print(y_pred)
-# print(f'{season} : {y_pred}')
-
-# print(y_pred)
-
-# print(y_pred)
-
-# 	c_acc = class_wise_accuracy(y_pred, y_test)
-# 	print(f'{season} accuracy: {c_acc}')
-# 	final_acc.append(c_acc)
-
-# average_acc = np.mean(final_acc)
-
-# print(f'the average accuracy: {average_acc}')
-
-# 	# print("Best pair | c={}, score={}".format(best_c, best_score))
-# average_performance = np.mean(average_score)
-# print(f'The average best performance: {average_performance}')
-# '''
-# Conclusion: Best c is 0.01 for this project
-# '''
-# '''
-# SVM prediction
-# '''
-# total_accuracy = []
-
-# for season in seasons:
-# 	y = target[season]
-# 	x_train, x_test, x_val, y_train, y_test, y_val = split(x,y)
-# 	x_train_val = np.concatenate((x_train, x_val))
-# 	y_train_val = np.concatenate((y_train, y_val))
-# 	svm = LinearSVC(C=np.mean(best_c_list))
-# 	svm.fit(x_train_val, y_train_val)
-# 	y_pred = svm.predict(x_test)
-# 	'''
-# 	Vanilla Accuracy
-# 	'''
-
-# 	accuracy = (1/len(y_pred)) * np.sum(np.floor((y_pred + np.array(y_test))/2) )
-# 	print(f'The vanilla {season} accuracy: {accuracy}')
-# 	total_accuracy.append(accuracy)
-# class_wise  = np.mean(total_accuracy)
-
-# print(f'class-wise averaged accuracy: {class_wise}')
-
+print(vanilla_Acc)
