@@ -69,16 +69,16 @@ def preprocess(dataset, reference, start=10, end=14):
 	image_label = image_label.drop(columns = [i for i in range(end,len(image_labels.columns))])
 	image_label.columns = ['image', 'spring','summer', 'autumn', 'winter']
 	image_label_spring = image_label[image_label.spring != 0]
-	# spring_shape = image_label_spring.shape
+	spring_shape = image_label_spring.drop(columns=['image']).shape
 	image_label_summer = image_label[image_label.summer != 0]
-	# summer_shape = image_label_summer.shape
+	summer_shape = image_label_summer.drop(columns=['image']).shape
 	image_label_autumn = image_label[image_label.autumn != 0]
-	# autumn_shape = image_label_autumn.shape
+	autumn_shape = image_label_autumn.drop(columns=['image']).shape
 	image_label_winter = image_label[image_label.winter != 0]
-	# winter_shape = image_label_winter.shape
+	winter_shape = image_label_winter.drop(columns=['image']).shape
 	image_label_data = pd.concat([image_label_spring, image_label_summer, image_label_autumn, image_label_winter]).drop_duplicates()
 	x = np.array([np.load(os.path.join(os.path.join(dataset_directory,"imageclef2011_feats") , file + '_ft.npy')) for file in image_label_data.image])
-	return x, image_label_data
+	return x, image_label_data, spring_shape, summer_shape, autumn_shape, winter_shape
 '''
 function is used to split the train, test, val from the dataset
 according to the requirement: 60 (train) - 15(test) - 25 (val)
@@ -110,6 +110,20 @@ def class_wise_accuracy(y_pred, y):
 	c_accuracy = np.sum(y_pred == y) /np.array(y).shape
 	return c_accuracy
 
+'''
+function save is used to save the features in .npy files
+
+
+Change the 
+
+Input:
+
+
+Returns:
+
+None
+'''
+
 
 def save(x_train, x_test, x_val, y_train, y_test, y_val):
 	np.save(f'splits\\x_train.npy', x_train)
@@ -130,11 +144,13 @@ def load():
 	y_test = np.load(f'splits\\y_test.npy')
 	return x_train, x_test, x_val, y_train, y_test, y_val
 
-x, target = preprocess(filename[1], filename[0])
+x, image_label_data, spring_shape, summer_shape, autumn_shape, winter_shape = preprocess(filename[1], filename[0])
 
 seasons =  ['spring','summer', 'autumn', 'winter']
 
 regularization_constants = [0.01, 0.1, 0.1**0.5, 1, 10**0.5, 10, 100**0.5]
+
+
 
 '''
 splitting the dataset to find the optimal c
