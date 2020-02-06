@@ -1,0 +1,1 @@
+{"best c value": 0.01, "Average Class-wise accuracy": 0.41015653233473326, "Vanilla Accuracy": 0.8866995073891626}
