@@ -115,6 +115,13 @@ function save is used to save the features in .npy files
 
 Input:
 
+x_train: x training data
+x_test: x testing data
+x_val: x validation data
+y_train: y training data
+y_test: y testing data
+y_val: y validation data
+
 
 Returns:
 
@@ -123,23 +130,16 @@ None
 
 
 def save(x_train, x_test, x_val, y_train, y_test, y_val):
-	np.save(f'splits\\x_train.npy', x_train)
-	np.save(f'splits\\x_val.npy', x_val)
-	np.save(f'splits\\x_test.npy', x_test)
-	np.save(f'splits\\y_train.npy', y_train)
-	np.save(f'splits\\y_val.npy', y_val)
-	np.save(f'splits\\y_test.npy', y_test)
+
+
+	np.save(os.path.join('splits', "x_train.npy"), x_train)
+	np.save(os.path.join('splits', "x_val.npy"), x_val)
+	np.save(os.path.join('splits', "x_test.npy"), x_test)
+	np.save(os.path.join('splits', "y_train.npy"), y_train)
+	np.save(os.path.join('splits', "y_val.npy"), y_val)
+	np.save(os.path.join('splits', "y_test.npy"), y_test)
 	print('Features Saved!')
 
-
-def load():
-	x_train = np.load(f'splits\\x_train.npy')
-	x_val = np.load(f'splits\\x_val.npy' )
-	x_test = np.load(f'splits\\x_test.npy' )
-	y_train = np.load(f'splits\\y_train.npy' )
-	y_val = np.load(f'splits\\y_val.npy' )
-	y_test = np.load(f'splits\\y_test.npy')
-	return x_train, x_test, x_val, y_train, y_test, y_val
 
 x, target, spring_shape,summer_shape, autumn_shape, winter_shape = preprocess(filename[1], filename[0])
 
@@ -232,3 +232,23 @@ vanilla_Acc = np.sum(y_prelim_pred== y_test_vanilla)/y_prelim_pred.shape[0]
 
 
 print(f'vanilla accuracy = {vanilla_Acc}')
+
+
+import json
+
+results = {}
+
+
+
+if not os.path.exists(f'accuracy'):
+	os.mkdir(f'accuracy')
+
+print('Writing out the results to folder accuracy. The results will be saved in "accFile.txt".')
+f = open(os.path.join('accuracy', "accFile.txt"), "w")   # 'r' for reading and 'w' for writing
+f.write(json.dumps(results))    # Write inside file 
+f.close() 
+
+print('Finished writing out file. Please check accfile.txt under the accuracy folder') 
+
+
+
