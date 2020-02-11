@@ -64,7 +64,7 @@ pytorch cpu
 torch broadcasting
 '''
 
-def pytorch_eucledian_distances(x, y):
+def pytorch_eucledian_distances(x, y,device=torch.device('cpu')):
     '''
     Input: x is an Nxd matrix
            y is an Mxd matirx
@@ -94,7 +94,7 @@ if device.type == 'cuda':
 	X.to(device)
 	T.to(device)
 	d = time()
-	l = pytorch_eucledian_distances(X,T)
+	l = pytorch_eucledian_distances(X,T, device)
 	time_elapsed=float(time()) - float(d)
 	print(l.size())
 	print(f'Time elapsed for "GPU" : {time_elapsed}')
@@ -120,37 +120,38 @@ returns
 
 
 
-# def KMeans(x, k, m, device=torch.device('cpu')):
+def KMeans(x, k, m, device=torch.device('cpu')):
 	
-# 	x = x.float()
-# 	x = x.to(device)
-# 	iterations = 0
-# 	'''
-# 	TODO: initialise cluster centers T[j,:], select 5 from x fixed
-# 	'''
+	x = x.float()
+	x = x.to(device)
+	iterations = 0
+	'''
+	TODO: initialise cluster centers T[j,:], select 5 from x fixed
+	'''
 
-# 	init_centroid = initialise(x,k)
-# 	while iterations < m:
-# 		dist = pytorch_eucledian_distances(X, init_centroid)
-# 		choice_cluster = torch.argmin(dist, dim=1)
+	init_centroid = initialise(x,k)
+	while iterations < m:
+		dist = pytorch_eucledian_distances(X, init_centroid,device=device)
+		choice_cluster = torch.argmin(dist, dim=1)
 
-# 		for index in range(k):
-# 			selected = torch.nonzero(choice_cluster == index).squeeze().to(device)
-# 			selected = torch.index_select(X, 0, selected)
-# 			initial_state[index] = selected.mean(dim=0)
-# 		center_shift = torch.sum(torch.sqrt(torch.sum((initial_state - initial_state_pre) ** 2, dim=1)))
-# 		iterations+=1
+		initial_state_pre = init_centroid.clone()
+		for index in range(k):
+			selected = torch.nonzero(choice_cluster == index).squeeze().to(device)
+			selected = torch.index_select(X, 0, selected)
+			init_centroid[index] = selected.mean(dim=0)
+		center_shift = torch.sum(torch.sqrt(torch.sum((init_centroid - initial_state_pre) ** 2, dim=1)))
+		iterations+=1
 
-# 	return x
-# def initialise(x,k):
-# 	num_samples = len(x)
-# 	'''
-# 	TODO: fixed choices for X
-# 	'''
-# 	indices = None
-# 	init_centroid = x[indices]
-# 	return init_centroid
+	return choice_cluster, init_centroid
+def initialise(x,k):
+	num_samples = len(x)
+	'''
+	TODO: fixed choices for X (Need to ask around)
+	'''
+	indices = np.random.choice(num_samples, k, replace=False)
+	init_centroid = x[indices,:]
+	return init_centroid
 
-
-# results = KMeans(X, 5, 5, device='cuda')
-# print(results)
+print('TASK 2')
+choice_cluster, init_centroid= KMeans(X, 5, 1000)
+print(choice_cluster, init_centroid)
