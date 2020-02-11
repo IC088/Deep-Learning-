@@ -155,3 +155,6 @@ def initialise(x,k):
 print('TASK 2')
 choice_cluster, init_centroid= KMeans(X, 5, 1000)
 print(choice_cluster, init_centroid)
+
+
+import matplotlib.pyplot as plt
