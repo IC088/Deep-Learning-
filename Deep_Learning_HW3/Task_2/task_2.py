@@ -38,6 +38,14 @@ from models.model import Net
 
 def train(model, device, train_loader, optimizer, epoch):
     model.train()
+    train_losses = []
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = model(data)
+        loss = nn.NLLLoss(output, target)
+        loss.backward()
+        optimizer.step()
 
 
 
