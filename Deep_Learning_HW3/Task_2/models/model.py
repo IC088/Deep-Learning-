@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 
 '''
 2 .  TODO: Define Model
@@ -14,10 +15,10 @@ class NN(nn.Module):
         self.fc3 = nn.Linear(100, 10)  # 10 neurons for 3rd layer
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = nn.functional.relu(self.fc1(x))
+        x = nn.functional.relu(self.fc2(x))
         x = self.fc3(x)
-        return F.log_softmax(x, dim=1)
+        return nn.functional.log_softmax(x, dim=1)
 '''
 Testing using GPU
 '''
