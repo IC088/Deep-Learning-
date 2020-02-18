@@ -49,8 +49,8 @@ def train(model, device, train_loader, optimizer, epoch):
         loss.backward()
         optimizer.step()
         train_losses.append(loss.item()) 
-        print(f'Training Epoch = {epoch} [ {batch_idx * len(data)} / {len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.0%}% )')
-        print(f'Loss {loss.item():.6f}')
+        # print(f'Training Epoch = {epoch} [ {batch_idx * len(data)/len(train_loader.dataset)} ({ batch_idx / len(train_loader):.0%} )')
+        # print(f'Loss {loss.item():.6f}')
     train_loss = torch.mean(torch.tensor(train_losses))
     print(f'Training Set Average Loss: {train_loss:.4f}')
 
@@ -76,7 +76,7 @@ def evaluate(model, device, val_loader):
     val_loss /= len(val_loader.dataset)
 
     print(f'Validation set Average loss : {val_loss:.4f}')
-    print(f'Accuracy : {correct}/{len(val_loader.dataset)}')
+    print(f'Accuracy : {correct/len(val_loader.dataset)}')
 
 
 
@@ -87,11 +87,11 @@ def main():
     print('Starting Training')
 
     batch_size = 64
-    epochs = 100
+    epochs = 5
     learningrate = 0.01
     device = torch.device( 'cpu' )
 
-    model = NN()
+    model = Net()
     optimizer=torch.optim.SGD(model.parameters(),lr=learningrate, momentum=0.0, weight_decay=0)
 
     train_data_loader, test_data_loader = get_data_loaders(batch_size)
@@ -99,7 +99,7 @@ def main():
     for epoch in range(epochs):
         print ('current epoch:', epoch+1)
         training_loss = train(model, device, train_data_loader, optimizer, epoch)
-    print(training_loss)
+        val_loss = evaluate(model, device, test_data_loader)
 
 
 
