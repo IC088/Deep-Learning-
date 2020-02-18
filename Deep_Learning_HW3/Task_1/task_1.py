@@ -24,8 +24,8 @@ def datagen2d_m(mean2, flip, num):
   z2[:,0]=z2[:,0]*3 
   x2=np.dot(z2,mat2) + mean2.reshape((1,2))
 
-  y1= (np.random.ranf(size=(num//2)) >= flip ).astype(dtype=np.float32)  #np.ones((num//2))+
-  y2=  (np.random.ranf(size=(num-num//2)) <= flip ).astype(dtype=np.float32) #np.zeros((num-num//2,2))
+  y1= (np.random.ranf(size=(num//2)) >= flip ).astype(dtype=np.float64)  #np.ones((num//2))+
+  y2=  (np.random.ranf(size=(num-num//2)) <= flip ).astype(dtype=np.float64) #np.zeros((num-num//2,2))
 
   # random label noise in y1, y2
 
@@ -115,15 +115,16 @@ class logreglayer(nn.Module):
     
     super(logreglayer, self).__init__() #initialize base class
 
-    self.bias=torch.nn.Parameter(data=torch.zeros(1),requires_grad=True)
-    self.w = torch.nn.Parameter(data=torch.randn((dims,1),dtype=torch.double), requires_grad=True)
-    #TODO CHECK
+    self.bias=torch.nn.Parameter(data=torch.zeros(1, dtype= torch.float32),requires_grad=True)
+    self.w = torch.nn.Parameter(data=torch.randn( (dims,1), dtype= torch.float32 ),requires_grad=True)
+    self.linear = torch.nn.Linear(2, 1)
+    # TODO CHECK
     # YOUR IMPLEMENTATION HERE # shape must be (dims,1), requires_grad to True , random init of values from a zero mean normal distribution
 
   def forward(self,x):
     #TODO CHECK
     # YOUR IMPLEMENTATION HERE
-    outputs = torch.sigmoid(self.w * x + self.bias)
+    outputs = torch.nn.functional.sigmoid(self.linear(x))
     return outputs
 
 
@@ -137,12 +138,13 @@ def train_epoch(model,  trainloader,  criterion, device, optimizer ):
     for batch_idx, data in enumerate(trainloader):
 
         inputs=data[0].to(device)
-        labels=data[1].to(device)
+        labels=data[1].to(device, dtype=torch.long)
+
 
 
         optimizer.zero_grad()
 
-        output = model(inputs)
+        output = model(inputs.float())
 
         loss = criterion(output, labels)
         loss.backward()
@@ -242,12 +244,11 @@ def run():
   # define dataloader over dataset
   loadertr = torch.utils.data.DataLoader(dtr,batch_size=batch_size,shuffle=True) # returns an iterator
   loaderval= torch.utils.data.DataLoader(dv,batch_size=valbatch_size,shuffle=False)
-
   #model and loss
   #TODO
-  model= logreglayer() # init with the no of features# your logreglayer properly initialized
+  model= logreglayer(xtr.size) # init with the no of features# your logreglayer properly initialized
   #TODO
-  criterion = torch.nn.BCELoss()# which loss function suits here, given that our model produces 1-dimensional output  and we want to use it for classification?
+  criterion = torch.nn.CrossEntropyLoss()# which loss function suits here, given that our model produces 1-dimensional output  and we want to use it for classification?
 
   optimizer=torch.optim.SGD(model.parameters(),lr=learningrate, momentum=0.0, weight_decay=0)
   device=torch.device('cpu') 
