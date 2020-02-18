@@ -115,16 +115,16 @@ class logreglayer(nn.Module):
     
     super(logreglayer, self).__init__() #initialize base class
 
-    self.bias=torch.nn.Parameter(data=torch.zeros(1, dtype= torch.float32),requires_grad=True)
-    self.w = torch.nn.Parameter(data=torch.randn( (dims,1), dtype= torch.float32 ),requires_grad=True)
-    self.linear = torch.nn.Linear(2, 1)
+    self.bias=torch.nn.Parameter(data=torch.zeros(1),requires_grad=True)
+    self.w = torch.nn.Parameter(data=torch.randn( (dims,1) ),requires_grad=True)
+    self.linear = torch.nn.Linear(2,32)
     # TODO CHECK
     # YOUR IMPLEMENTATION HERE # shape must be (dims,1), requires_grad to True , random init of values from a zero mean normal distribution
 
   def forward(self,x):
     #TODO CHECK
     # YOUR IMPLEMENTATION HERE
-    outputs = torch.nn.functional.sigmoid(self.linear(x))
+    outputs = self.linear(x)
     return outputs
 
 
@@ -139,8 +139,6 @@ def train_epoch(model,  trainloader,  criterion, device, optimizer ):
 
         inputs=data[0].to(device)
         labels=data[1].to(device, dtype=torch.long)
-
-
 
         optimizer.zero_grad()
 
@@ -161,7 +159,6 @@ def train_epoch(model,  trainloader,  criterion, device, optimizer ):
         losses.append(loss.item())
 
     return losses
-
 
 def evaluate(model, dataloader, criterion, device):
 
@@ -236,7 +233,6 @@ def run():
   
   #define dataset
   xtr,ytr,xv,yv,xt,yt=gendata()
-
   #Tensordataset
   #TODO
   dtr= torch.utils.data.TensorDataset( torch.tensor(xtr),torch.tensor(ytr) )# TensorDataset from tensors from xtr, ytr - our training features and labels
@@ -259,7 +255,7 @@ def run():
   model.load_state_dict(bestweights)
 
   #TODO
-  dte = torch.utils.data.TensorDataset( torch.tensor(xte),torch.tensor(yte) ) # TensorDataset from tensors from xte, yte - our test features and labels
+  dte = torch.utils.data.TensorDataset( torch.tensor(xt),torch.tensor(yt) ) # TensorDataset from tensors from xte, yte - our test features and labels
   loaderte=torch.utils.data.DataLoader(dte,batch_size=valbatch_size,shuffle=False)
 
   test_accuracy= evaluate(model = model, dataloader = loaderte, criterion = None, device = device)
@@ -276,5 +272,3 @@ def run():
 if __name__=='__main__':
 
   run()
-
-
