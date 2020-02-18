@@ -237,30 +237,28 @@ def run():
 
   #Tensordataset
   #TODO
-  dtr= torch.utils.data.TensorDataset( )#TensorDataset from tensors from xtr, ytr - our training features and labels
-  dv = torch.utils.data.TensorDataset( )# TensorDataset from tensors from xv, yv - our validation features and labels
-  #define dataloader over dataset
-  loadertr=torch.utils.data.DataLoader(dtr,batch_size=batch_size,shuffle=True) # returns an iterator
-  loaderval=torch.utils.data.DataLoader(dv,batch_size=valbatch_size,shuffle=False)
+  dtr= torch.utils.data.TensorDataset( torch.tensor(xtr),torch.tensor(ytr) )# TensorDataset from tensors from xtr, ytr - our training features and labels
+  dv = torch.utils.data.TensorDataset( torch.tensor(xv), torch.tensor(yv) )# TensorDataset from tensors from xv, yv - our validation features and labels
+  # define dataloader over dataset
+  loadertr = torch.utils.data.DataLoader(dtr,batch_size=batch_size,shuffle=True) # returns an iterator
+  loaderval= torch.utils.data.DataLoader(dv,batch_size=valbatch_size,shuffle=False)
 
   #model and loss
   #TODO
   model= logreglayer() # init with the no of features# your logreglayer properly initialized
   #TODO
-  criterion = # which loss function suits here, given that our model produces 1-dimensional output  and we want to use it for classification?
+  criterion = torch.nn.BCELoss()# which loss function suits here, given that our model produces 1-dimensional output  and we want to use it for classification?
 
   optimizer=torch.optim.SGD(model.parameters(),lr=learningrate, momentum=0.0, weight_decay=0)
-  device=torch.device('cpu')
+  device=torch.device('cpu') 
 
 
   best_epoch, best_perfmeasure, bestweights = train_modelcv(dataloader_cvtrain = loadertr, dataloader_cvtest = loaderval ,  model = model ,  criterion = criterion , optimizer = optimizer, scheduler = None, num_epochs = maxnumepochs , device = device)
 
-
-  
   model.load_state_dict(bestweights)
 
   #TODO
-  dte=  # TensorDataset from tensors from xte, yte - our test features and labels
+  dte = torch.utils.data.TensorDataset( torch.tensor(xte),torch.tensor(yte) ) # TensorDataset from tensors from xte, yte - our test features and labels
   loaderte=torch.utils.data.DataLoader(dte,batch_size=valbatch_size,shuffle=False)
 
   test_accuracy= evaluate(model = model, dataloader = loaderte, criterion = None, device = device)
