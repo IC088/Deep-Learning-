@@ -43,7 +43,7 @@ def train(model, device, train_loader, optimizer, epoch):
 
 # 8 . Validation phase function (using test set as requested)
 
-def evaluate(model, device, train_loader, optimizer, epoch):
+def evaluate(model, ):
     model.eval()
 
 
