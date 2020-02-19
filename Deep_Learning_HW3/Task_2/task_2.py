@@ -32,9 +32,6 @@ from models.model import NN
 from models.model import Net
 
 
-# 3 . TODO: Define Loss
-
-
 # 7 . Train phase function
 
 def train(model, device, train_loader, optimizer, epoch):
@@ -43,8 +40,8 @@ def train(model, device, train_loader, optimizer, epoch):
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
-        # data = data.view(data.size(0), -1)
         output = model(data)
+        # 3. Define the loss (negative log likelihood)
         loss = F.nll_loss(output, target)
         loss.backward()
         optimizer.step()
@@ -69,7 +66,8 @@ def evaluate(model, device, val_loader):
             data, target = data.to(device), target.to(device)
             output = model(data)
             
-            # sum up all the batch losses
+            # 3. Define the loss (negative log likelihood)
+            
             val_loss += F.nll_loss(output, target, reduction='sum').item()
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
@@ -81,17 +79,16 @@ def evaluate(model, device, val_loader):
 
 
 
-
-
 def main():
     print('Starting Training')
-
+    # 5 . initialize model parameters, usually when model gets instantiated
     batch_size = 64
     epochs = 5
     learningrate = 0.01
     device = torch.device( 'cpu' )
 
     model = Net()
+    # 4 . Define the optimiser
     optimizer=torch.optim.SGD(model.parameters(),lr=learningrate, momentum=0.0, weight_decay=0)
 
     train_data_loader, test_data_loader = get_data_loaders(batch_size)
@@ -104,5 +101,5 @@ def main():
 
 
 if __name__ == '__main__':
-    print('Still Under Construction')
+    print('Starting HW3')
     main()
