@@ -19,7 +19,7 @@ Defining the model as specified in the HW documentation
 class NN(nn.Module):
     def __init__(self):
         super(NN, self).__init__()
-        self.fc1 = nn.Linear(28, 300) # 300 Neurons for first layer, from 28 input from the dataset
+        self.fc1 = nn.Linear(784, 300) # 300 Neurons for first layer, from 28 input from the dataset
         self.fc2 = nn.Linear(300, 100) # 100 Neurons for second layer
         self.fc3 = nn.Linear(100, 10)  # 10 neurons for 3rd layer
 

@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from torchvision import datasets, transforms
 import torchvision
 import torch.nn.functional as F
+import numpy as np
 
 
 # 1 . TODO: Define dataset class and dataloader class
@@ -38,17 +39,27 @@ def train(model, device, train_loader, optimizer, epoch):
     model.train()
     train_losses = []
     for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = data.to(device), target.to(device)
+
+        if isinstance(model, Net):
+            data, target = data.to(device), target.to(device)
+        else:
+            data, target = torch.reshape(data,(data.shape[0],784)).to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
         # 3. Define the loss (negative log likelihood)
-        loss = F.nll_loss(output, target)
+        if isinstance(model, Net):
+            loss = F.nll_loss(output, target)
+        else:
+            loss = F.nll_loss(output, target, reduction='sum')
         loss.backward()
         optimizer.step()
         train_losses.append(loss.item()) 
         # print(f'Training Epoch = {epoch} [ {batch_idx * len(data)/len(train_loader.dataset)} ({ batch_idx / len(train_loader):.0%} )')
         # print(f'Loss {loss.item():.6f}')
-    train_loss = torch.mean(torch.tensor(train_losses))
+    if isinstance(model, Net):
+        train_loss = torch.mean(torch.tensor(train_losses))
+    else:
+        train_loss = torch.sum(torch.tensor(np.array(train_losses)))/len(train_loader.dataset)
     print(f'Training Set Average Loss: {train_loss:.4f}')
 
 
@@ -63,7 +74,10 @@ def evaluate(model, device, val_loader):
 
     with torch.no_grad():
         for data, target in val_loader:
-            data, target = data.to(device), target.to(device)
+            if isinstance(model, Net):
+                data, target = data.to(device), target.to(device)
+            else:
+                data, target = torch.reshape(data,(data.shape[0],784)).to(device), target.to(device)
             output = model(data)
             
             # 3. Define the loss (negative log likelihood)
@@ -82,30 +96,36 @@ def evaluate(model, device, val_loader):
 def main():
     print('Starting Training')
     # 5 . initialize model parameters, usually when model gets instantiated
-    batch_size = 128
-    epochs = 20
+    batch_size = 64
+    epochs = 5
     learningrate = 0.01
     device = torch.device( 'cuda' if torch.cuda.is_available() else 'cpu' )
 
 
-    model = Net().to(device)
+
+    model = NN().to(device)
+
+
+    
     # 4 . Define the optimiser
     optimizer=torch.optim.SGD(model.parameters(),lr=learningrate, momentum=0.0, weight_decay=0)
 
     train_data_loader, test_data_loader = get_data_loaders(batch_size)
 
 
-    train_loss, val_loss = [], [] 
+    train_losses, val_losses = [], [] 
 
     for epoch in range(epochs):
         print (f'current epoch:{epoch+1}')
         print(f'batch size: {batch_size}')
 
         training_loss = train(model, device, train_data_loader, optimizer, epoch)
-        val_loss = evaluate(model, device, test_data_loader)
+        val_loss = evaluate(model, device, test_data_loader) 
 
 
-        train_losses.append(train_loss)
+        # Save a list of train and val loss
+
+        train_losses.append(training_loss)
         val_losses.append(val_loss)
 
 

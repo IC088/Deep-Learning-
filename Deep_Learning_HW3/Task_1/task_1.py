@@ -129,10 +129,12 @@ class logreglayer(nn.Module):
     # YOUR IMPLEMENTATION HERE
     
     x = x.type(torch.FloatTensor)
-    print(self.w.transpose(0,1).shape)
-    print(x.shape)
+
+    # print(f'x shape : {x.shape}')
+
     # outputs = torch.sigmoid(self.linear(x))
-    outputs = torch.sigmoid(self.w.transpose(0,1) * x +self.bias)
+    # outputs = torch.sigmoid(torch.matmul(x,self.w)+self.bias)
+    outputs = torch.sigmoid(self.w * x + self.bias)
 
     return outputs
 
@@ -184,9 +186,12 @@ def evaluate(model, dataloader, criterion, device):
 
           print ('epoch at',len(dataloader.dataset), ctr)
 
+          inputs = data[0].to(device)    
 
-          inputs = data[0].to(device)        
+    
           outputs = model(inputs)
+
+
 
           labels = data[1]
           labels = labels.float()
@@ -212,7 +217,7 @@ def train_modelcv(dataloader_cvtrain, dataloader_cvtest ,  model ,  criterion, o
 
     model.train(True)
     losses=train_epoch(model,  dataloader_cvtrain,  criterion,  device , optimizer )
-    #scheduler.step()
+    # scheduler.step()
 
     model.train(False)
     measure = evaluate(model, dataloader_cvtest, criterion, device)
@@ -243,6 +248,7 @@ def run():
   
   #define dataset
   xtr,ytr,xv,yv,xt,yt=gendata()
+
   #Tensordataset
   #TODO
 
@@ -254,7 +260,7 @@ def run():
   loaderval= torch.utils.data.DataLoader(dv,batch_size=valbatch_size,shuffle=False)
   #model and loss
   #TODO
-  model= logreglayer(xtr.shape[0]) # init with the no of features# your logreglayer properly initialized
+  model= logreglayer(8) # init with the no of features# your logreglayer properly initialized
   #TODO
   criterion = torch.nn.CrossEntropyLoss()# which loss function suits here, given that our model produces 1-dimensional output  and we want to use it for classification?
 
