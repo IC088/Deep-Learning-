@@ -28,8 +28,8 @@ from utils.data_loaders import get_data_loaders
 
 # 2 . TODO: Define Model
 
-from models.model import NN
-from models.model import Net
+from models.model import NN # with cpu
+from models.model import Net # with gpu
 
 
 # 7 . Train phase function
@@ -67,7 +67,7 @@ def evaluate(model, device, val_loader):
             output = model(data)
             
             # 3. Define the loss (negative log likelihood)
-            
+
             val_loss += F.nll_loss(output, target, reduction='sum').item()
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
@@ -82,21 +82,31 @@ def evaluate(model, device, val_loader):
 def main():
     print('Starting Training')
     # 5 . initialize model parameters, usually when model gets instantiated
-    batch_size = 64
-    epochs = 5
+    batch_size = 128
+    epochs = 20
     learningrate = 0.01
-    device = torch.device( 'cpu' )
+    device = torch.device( 'cuda' if torch.cuda.is_available() else 'cpu' )
 
-    model = Net()
+
+    model = Net().to(device)
     # 4 . Define the optimiser
     optimizer=torch.optim.SGD(model.parameters(),lr=learningrate, momentum=0.0, weight_decay=0)
 
     train_data_loader, test_data_loader = get_data_loaders(batch_size)
 
+
+    train_loss, val_loss = [], [] 
+
     for epoch in range(epochs):
-        print ('current epoch:', epoch+1)
+        print (f'current epoch:{epoch+1}')
+        print(f'batch size: {batch_size}')
+
         training_loss = train(model, device, train_data_loader, optimizer, epoch)
         val_loss = evaluate(model, device, test_data_loader)
+
+
+        train_losses.append(train_loss)
+        val_losses.append(val_loss)
 
 
 

@@ -115,16 +115,25 @@ class logreglayer(nn.Module):
     
     super(logreglayer, self).__init__() #initialize base class
 
+    # self.bias=torch.nn.Parameter(data=torch.zeros(1,dtype=torch.double),requires_grad=True)
     self.bias=torch.nn.Parameter(data=torch.zeros(1),requires_grad=True)
+    # self.w = torch.nn.Parameter(data=torch.randn( (dims,1),dtype=torch.double ),requires_grad=True)
     self.w = torch.nn.Parameter(data=torch.randn( (dims,1) ),requires_grad=True)
-    self.linear = torch.nn.Linear(2,32)
+    
+    # self.linear = torch.nn.Linear(2, 32)
     # TODO CHECK
     # YOUR IMPLEMENTATION HERE # shape must be (dims,1), requires_grad to True , random init of values from a zero mean normal distribution
 
   def forward(self,x):
     #TODO CHECK
     # YOUR IMPLEMENTATION HERE
-    outputs = self.linear(x)
+    
+    x = x.type(torch.FloatTensor)
+    print(self.w.transpose(0,1).shape)
+    print(x.shape)
+    # outputs = torch.sigmoid(self.linear(x))
+    outputs = torch.sigmoid(self.w.transpose(0,1) * x +self.bias)
+
     return outputs
 
 
@@ -138,20 +147,19 @@ def train_epoch(model,  trainloader,  criterion, device, optimizer ):
     for batch_idx, data in enumerate(trainloader):
 
         inputs=data[0].to(device)
-        labels=data[1].to(device, dtype=torch.long)
+        labels=data[1].to(device)
 
         optimizer.zero_grad()
 
-        output = model(inputs.float())
+        output = model(inputs)
 
-        loss = criterion(output, labels)
+
+        loss = criterion(output, labels.long())
         loss.backward()
 
 
         #apply gradient to your parameters in model ... model.w and model.bias ... remember about data and grad :) 
         #TODO
-
-
         # run it at first using the optimizer, and fill up all other todos, 
         # then in a second step replace it by your own version which updates the model parameters
         optimizer.step()
@@ -175,6 +183,8 @@ def evaluate(model, dataloader, criterion, device):
       for ctr, data in enumerate(dataloader):
 
           print ('epoch at',len(dataloader.dataset), ctr)
+
+
           inputs = data[0].to(device)        
           outputs = model(inputs)
 
@@ -235,6 +245,8 @@ def run():
   xtr,ytr,xv,yv,xt,yt=gendata()
   #Tensordataset
   #TODO
+
+
   dtr= torch.utils.data.TensorDataset( torch.tensor(xtr),torch.tensor(ytr) )# TensorDataset from tensors from xtr, ytr - our training features and labels
   dv = torch.utils.data.TensorDataset( torch.tensor(xv), torch.tensor(yv) )# TensorDataset from tensors from xv, yv - our validation features and labels
   # define dataloader over dataset
@@ -242,7 +254,7 @@ def run():
   loaderval= torch.utils.data.DataLoader(dv,batch_size=valbatch_size,shuffle=False)
   #model and loss
   #TODO
-  model= logreglayer(xtr.size) # init with the no of features# your logreglayer properly initialized
+  model= logreglayer(xtr.shape[0]) # init with the no of features# your logreglayer properly initialized
   #TODO
   criterion = torch.nn.CrossEntropyLoss()# which loss function suits here, given that our model produces 1-dimensional output  and we want to use it for classification?
 
