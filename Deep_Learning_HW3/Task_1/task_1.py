@@ -120,7 +120,7 @@ class logreglayer(nn.Module):
     # self.w = torch.nn.Parameter(data=torch.randn( (dims,1),dtype=torch.double ),requires_grad=True)
     self.w = torch.nn.Parameter(data=torch.randn( (dims,1) ),requires_grad=True)
     
-    # self.linear = torch.nn.Linear(2, 32)
+    self.linear = torch.nn.Linear(2, 32)
     # TODO CHECK
     # YOUR IMPLEMENTATION HERE # shape must be (dims,1), requires_grad to True , random init of values from a zero mean normal distribution
 
@@ -130,11 +130,14 @@ class logreglayer(nn.Module):
     
     x = x.type(torch.FloatTensor)
 
-    # print(f'x shape : {x.shape}')
+    print(f'x shape : {x.shape}')
+    print(f'w shape : {self.w.shape}')
 
     # outputs = torch.sigmoid(self.linear(x))
     # outputs = torch.sigmoid(torch.matmul(x,self.w)+self.bias)
-    outputs = torch.sigmoid(self.w * x + self.bias)
+    # outputs = (x.dot(self.w) + self.bias)
+    outputs = self.linear(x)
+    print(outputs.shape)
 
     return outputs
 
@@ -260,7 +263,7 @@ def run():
   loaderval= torch.utils.data.DataLoader(dv,batch_size=valbatch_size,shuffle=False)
   #model and loss
   #TODO
-  model= logreglayer(8) # init with the no of features# your logreglayer properly initialized
+  model= logreglayer(2) # init with the no of features# your logreglayer properly initialized
   #TODO
   criterion = torch.nn.CrossEntropyLoss()# which loss function suits here, given that our model produces 1-dimensional output  and we want to use it for classification?
 

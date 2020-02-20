@@ -23,6 +23,7 @@ import numpy as np
 
 
 from utils.data_loaders import get_data_loaders
+from utils.vis import plot_training_validation_loss
 
 
 # train_data_loader, test_data_loader = get_data_loaders(100)
@@ -62,6 +63,8 @@ def train(model, device, train_loader, optimizer, epoch):
         train_loss = torch.sum(torch.tensor(np.array(train_losses)))/len(train_loader.dataset)
     print(f'Training Set Average Loss: {train_loss:.4f}')
 
+    return train_loss
+
 
 
 # 8 . Validation phase function (using test set as requested)
@@ -90,6 +93,7 @@ def evaluate(model, device, val_loader):
     print(f'Validation set Average loss : {val_loss:.4f}')
     print(f'Accuracy : {correct/len(val_loader.dataset)}')
 
+    return val_loss
 
 
 
@@ -103,11 +107,12 @@ def main():
 
 
 
-    model = NN().to(device)
+    model = Net().to(device)
 
 
     
     # 4 . Define the optimiser
+    
     optimizer=torch.optim.SGD(model.parameters(),lr=learningrate, momentum=0.0, weight_decay=0)
 
     train_data_loader, test_data_loader = get_data_loaders(batch_size)
@@ -121,13 +126,22 @@ def main():
 
         training_loss = train(model, device, train_data_loader, optimizer, epoch)
         val_loss = evaluate(model, device, test_data_loader) 
+        
 
+        # Save a model if val loss is lower than min_loss
+        if (len(val_losses) > 0) and (val_loss < min(val_losses)):
+            torch.save(model.state_dict(), "fashion_mnist_task2.pt")
+            print('Saving Model for testing')
 
         # Save a list of train and val loss
+
 
         train_losses.append(training_loss)
         val_losses.append(val_loss)
 
+
+    print('Displaying train val graph')
+    plot_training_validation_loss(epochs, train_losses, val_losses)
 
 
 if __name__ == '__main__':
