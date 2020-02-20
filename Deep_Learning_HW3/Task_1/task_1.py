@@ -100,7 +100,7 @@ def visualize_data(xv,yv,w,bias):
     y = np.arange(-10.0, 12.0, delta)
     X, Y = np.meshgrid(x, y)  
 
-    U = bias + w[0]*X+ w[1]*Y  
+    U = bias + w[0]*torch.from_numpy(X)+ w[1]*torch.from_numpy(Y)
     Z= 1.0/(1.0+np.exp(-U))
 
     CS = plt.contourf(X, Y, Z, levels=8,cmap=cm.viridis) #coolwarm
@@ -116,11 +116,10 @@ class logreglayer(nn.Module):
     super(logreglayer, self).__init__() #initialize base class
 
     # self.bias=torch.nn.Parameter(data=torch.zeros(1,dtype=torch.double),requires_grad=True)
-    self.bias=torch.nn.Parameter(data=torch.zeros(1),requires_grad=True)
+    self.bias=torch.nn.Parameter(data=torch.zeros(1, dtype=torch.double),requires_grad=True)
     # self.w = torch.nn.Parameter(data=torch.randn( (dims,1),dtype=torch.double ),requires_grad=True)
-    self.w = torch.nn.Parameter(data=torch.randn( (dims,1) ),requires_grad=True)
-    
-    self.linear = torch.nn.Linear(2, 32)
+    self.w = torch.nn.Parameter(data=torch.randn( (dims,1), dtype=torch.double ),requires_grad=True)
+
     # TODO CHECK
     # YOUR IMPLEMENTATION HERE # shape must be (dims,1), requires_grad to True , random init of values from a zero mean normal distribution
 
@@ -128,16 +127,14 @@ class logreglayer(nn.Module):
     #TODO CHECK
     # YOUR IMPLEMENTATION HERE
     
-    x = x.type(torch.FloatTensor)
+    # x = x.type(torch.FloatTensor)
 
-    print(f'x shape : {x.shape}')
-    print(f'w shape : {self.w.shape}')
+    # print(f'x shape : {x.shape}')
+    # print(f'w shape : {self.w.shape}')
 
     # outputs = torch.sigmoid(self.linear(x))
     # outputs = torch.sigmoid(torch.matmul(x,self.w)+self.bias)
-    # outputs = (x.dot(self.w) + self.bias)
-    outputs = self.linear(x)
-    print(outputs.shape)
+    outputs = torch.sigmoid(torch.einsum('ij,jk->ik', x, self.w) + self.bias)
 
     return outputs
 
@@ -158,8 +155,7 @@ def train_epoch(model,  trainloader,  criterion, device, optimizer ):
 
         output = model(inputs)
 
-
-        loss = criterion(output, labels.long())
+        loss = criterion(output, labels)
         loss.backward()
 
 
@@ -167,7 +163,10 @@ def train_epoch(model,  trainloader,  criterion, device, optimizer ):
         #TODO
         # run it at first using the optimizer, and fill up all other todos, 
         # then in a second step replace it by your own version which updates the model parameters
-        optimizer.step()
+        # optimizer.step()
+        with torch.no_grad():
+            model.w -= 0.01*model.w.grad 
+            model.bias -= 0.01*model.bias.grad
 
         losses.append(loss.item())
 
@@ -185,26 +184,23 @@ def evaluate(model, dataloader, criterion, device):
 
     running_corrects = 0
     with torch.no_grad():
-      for ctr, data in enumerate(dataloader):
+        for ctr, data in enumerate(dataloader):
 
-          print ('epoch at',len(dataloader.dataset), ctr)
+            print ('epoch at',len(dataloader.dataset), ctr)
+            inputs = data[0].to(device)        
+            outputs = model(inputs)
 
-          inputs = data[0].to(device)    
-
-    
-          outputs = model(inputs)
-
+            labels = data[1]
+            labels = labels.float()
+            cpuout= outputs.to('cpu')
 
 
-          labels = data[1]
-          labels = labels.float()
-          cpuout= outputs.to('cpu')
 
-          #_, preds = torch.max(cpuout, 1)
-          preds = ( cpuout >= 0.5 ).squeeze(1)
-          running_corrects += torch.sum(preds == labels.data)
+            #_, preds = torch.max(cpuout, 1)
+            preds = ( cpuout >= 0.5 ).squeeze(1)
+            running_corrects += torch.sum(preds == labels.data.bool())
 
-      accuracy = running_corrects.double() / len(dataloader.dataset) # this does not work if one uses a datasampler!!!
+        accuracy = running_corrects.double() / len(dataloader.dataset) # this does not work if one uses a datasampler!!!
 
     return accuracy.item() 
 
@@ -263,9 +259,9 @@ def run():
   loaderval= torch.utils.data.DataLoader(dv,batch_size=valbatch_size,shuffle=False)
   #model and loss
   #TODO
-  model= logreglayer(2) # init with the no of features# your logreglayer properly initialized
+  model= logreglayer(dims=2) # init with the no of features# your logreglayer properly initialized
   #TODO
-  criterion = torch.nn.CrossEntropyLoss()# which loss function suits here, given that our model produces 1-dimensional output  and we want to use it for classification?
+  criterion = torch.nn.BCELoss()# which loss function suits here, given that our model produces 1-dimensional output  and we want to use it for classification?
 
   optimizer=torch.optim.SGD(model.parameters(),lr=learningrate, momentum=0.0, weight_decay=0)
   device=torch.device('cpu') 

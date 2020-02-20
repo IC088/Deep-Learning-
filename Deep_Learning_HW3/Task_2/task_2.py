@@ -106,11 +106,13 @@ def main():
     device = torch.device( 'cuda' if torch.cuda.is_available() else 'cpu' )
 
 
+    if torch.cuda.is_available():
+        model = Net().to(device)
+        print('USING CUDA')
+    else:
+        model = NN().to(device)
+        print('NOT USING CUDA')
 
-    model = Net().to(device)
-
-
-    
     # 4 . Define the optimiser
     
     optimizer=torch.optim.SGD(model.parameters(),lr=learningrate, momentum=0.0, weight_decay=0)
@@ -134,7 +136,6 @@ def main():
             print('Saving Model for testing')
 
         # Save a list of train and val loss
-
 
         train_losses.append(training_loss)
         val_losses.append(val_loss)

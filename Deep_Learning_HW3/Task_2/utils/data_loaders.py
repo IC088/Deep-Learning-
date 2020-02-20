@@ -14,5 +14,5 @@ def get_data_loaders(batch_size):
 	train_data_loader = torch.utils.data.DataLoader(train_set,batch_size=batch_size,shuffle=True,num_workers=4)
 	test_data_loader = torch.utils.data.DataLoader(test_set,batch_size=batch_size,shuffle=True,num_workers=4)
 
-# datasets.FashionMNIST('../data', train=True, download=True,transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.1307,), (0.3081,))]))
+
 	return train_data_loader, test_data_loader
