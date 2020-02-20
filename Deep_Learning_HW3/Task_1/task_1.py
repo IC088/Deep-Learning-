@@ -80,7 +80,6 @@ def visualize_data(xv,yv,w,bias):
   plt.plot(negsamples[:,0],negsamples[:,1],'bx')
   plt.plot(possamples[:,0],possamples[:,1],'rx')
 
-  #plot wx+b=0 ... wx= -b, x= a w^O + w/\|w\|^2 * -b
 
 
   def vis1():
@@ -126,14 +125,7 @@ class logreglayer(nn.Module):
   def forward(self,x):
     #TODO CHECK
     # YOUR IMPLEMENTATION HERE
-    
-    # x = x.type(torch.FloatTensor)
 
-    # print(f'x shape : {x.shape}')
-    # print(f'w shape : {self.w.shape}')
-
-    # outputs = torch.sigmoid(self.linear(x))
-    # outputs = torch.sigmoid(torch.matmul(x,self.w)+self.bias)
     outputs = torch.sigmoid(torch.einsum('ij,jk->ik', x, self.w) + self.bias)
 
     return outputs

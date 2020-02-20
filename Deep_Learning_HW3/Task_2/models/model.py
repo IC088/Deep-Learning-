@@ -29,7 +29,7 @@ class NN(nn.Module):
         x = self.fc3(x)
         return nn.functional.log_softmax(x, dim=1)
 '''
-Testing using GPU 
+TRying
 '''
 class Net(nn.Module):
     def __init__(self):

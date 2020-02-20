@@ -1,5 +1,0 @@
-Requirement already satisfied: torchvision in c:\users\chris\anaconda3\envs\tf_gpu\lib\site-packages (0.4.0)
-Requirement already satisfied: numpy in c:\users\chris\anaconda3\envs\tf_gpu\lib\site-packages (from torchvision) (1.18.1)
-Requirement already satisfied: six in c:\users\chris\anaconda3\envs\tf_gpu\lib\site-packages (from torchvision) (1.13.0)
-Requirement already satisfied: torch in c:\users\chris\anaconda3\envs\tf_gpu\lib\site-packages (from torchvision) (1.2.0)
-Requirement already satisfied: pillow>=4.1.1 in c:\users\chris\anaconda3\envs\tf_gpu\lib\site-packages (from torchvision) (7.0.0)
