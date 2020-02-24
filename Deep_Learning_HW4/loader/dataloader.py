@@ -28,9 +28,9 @@ Init Input:
 '''
 
 class CustomLoader(Dataset):
-	def __init__(self, directory, file, crop_size=224, transformation = None):
+	def __init__(self, im_directory, file, crop_size=224, transformation = None):
 		self.to_tensor = transforms.ToTensor()
-		self.directory = directory
+		self.im_directory = im_directory
 		self.image_label = pd.read_csv(file, header= None)
 		self.transformation = transformation
 		self.crop_size = crop_size
@@ -47,15 +47,18 @@ class CustomLoader(Dataset):
 		image = np.array(image)
 
 
-		if len(img.shape) == 2:
-			img = np.expand_dims(img, 2)
-			img = np.repeat(img, 3, 2)
+		if len(image.shape) == 2:
+			image = np.expand_dims(image, 2)
+			image = np.repeat(image, 3, 2)
 
 		return Image.fromarray(image)
 
 	def _resize(self, image, imsize):
 		'''
-		Resizing the image while keeping the ratio between the height and width
+		Resizing the image while keeping the ratio between the height and width. Used for this class
+		This is simple crop method
+		Inputs:
+		- Image (the image file after being loaded )
 		'''
 		width, height = image.size
 		scale = imsize / min(width,height)
@@ -71,14 +74,18 @@ class CustomLoader(Dataset):
 		'''
 		get the image and label
 		'''
-		image_filename = os.path.join(self.directory, self.image_label.iloc[index,0])
+		image_filename = os.path.join(self.im_directory, self.image_label.iloc[index,0])
+
+		if type(self.image_label.iloc[index,0]) == float():
+			print(self.image_label.iloc[index,0])
+
 		image = self._load(image_filename)
 		label = self.image_label.iloc[index,1]
 
 
-		if self.transformation in not None:
+		if self.transformation is not None:
 			image = self._resize(image, self.crop_size)
-			image = self.transform(image)
+			image = self.transformation(image)
 		sample = {'image': image, 'label': label}
 		return sample
 
