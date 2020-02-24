@@ -40,7 +40,7 @@ class CustomLoader(Dataset):
 		'''
 		Load image after getting the image from the files. Used for this class operation
 		Inputs: the image name 
-		Outputs: None
+		Outputs: Image from the array
 		'''
 		image = Image.open(image_name)
 		image.load()
