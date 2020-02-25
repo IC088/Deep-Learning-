@@ -72,7 +72,9 @@ def transform_five_crops(im_directory, file,size=280):
 	return accuracy
 
 def train_custom(dataset):
-	data_loader = DataLoader(dataset, batch_size=64, shuffle= True)
+	# Depending on how big your gpu memory is, can change the batch_size
+	data_loader = DataLoader(dataset, batch_size=8, shuffle= True)
+	torch.cuda.empty_cache()
 	device = torch.device('cuda')
 	'''
 	For this case since the recommendation is not to use VGG or AlexNet, resnet will be used. DenseNet121 although less parameters is more memory hungry
@@ -102,50 +104,55 @@ def train_custom(dataset):
 				pred = output.argmax(dim=1, keepdim=True)
 				correct += pred.eq(labels.view_as(pred)).sum().item()
 			loops += 1
+			# if loops >= 2500:
+			# 	break
+
 		print(f'{loops} loops have been gone through')
 
 	accuracy = (correct / len(data_loader.dataset)) * 100
+
 	return accuracy
 
 
 
 def run():
 
-	# confirmation = extract_filename('output.txt','val', 'data.csv')
-	# print(confirmation)
+	confirmation = extract_filename('output.txt','val', 'data.csv')
+	print(confirmation)
 
-	# '''
-	# Need to do a bit more processing sincee the top row needs to be deleted
-	# '''
-	# with open("data.csv",'r') as f:
-	# 	with open("finaldata.csv",'w') as f1:
-	# 		next(f) # skip header line
-	# 		for line in f:
-	# 			f1.write(line)
-	# os.remove("data.csv")
-	# print('Finished Pre-processing the data. New data is saved in finaldata.csv')
-
-
-	# '''
-	# Problem 1: Normalised and not normalised
-	# '''
-	# accuracy_not_normalised = transform_normalise( 'imagenet2500', 'finaldata.csv', normalise = False)
-	# accuracy_normalised = transform_normalise('imagenet2500','finaldata.csv', normalise = True)
-	# torch.cuda.empty_cache()
+	'''
+	Need to do a bit more processing sincee the top row needs to be deleted
+	'''
+	with open("data.csv",'r') as f:
+		with open("finaldata.csv",'w') as f1:
+			next(f) # skip header line
+			for line in f:
+				f1.write(line)
+	os.remove("data.csv")
+	print('Finished Pre-processing the data. New data is saved in finaldata.csv')
 
 
-	# print('\nProblem 1. Normalised/ Not Normalised Custom DataLoader: \n')
-	# print(f'Accuracy for not normalised = {accuracy_not_normalised}')
-	# print(f'Accuracy for normalised = {accuracy_normalised}')
+	'''
+	Problem 1: Normalised and not normalised
+	'''
+	accuracy_not_normalised = transform_normalise( 'imagenet2500', 'finaldata.csv', normalise = False)
+	accuracy_normalised = transform_normalise('imagenet2500','finaldata.csv', normalise = True)
+	torch.cuda.empty_cache()
 
-	# '''
-	# Problem 2 : 5 Crops
-	# '''
-	# accuracy_5_crop = transform_five_crops('imagenet2500','finaldata.csv')
 
-	# print('\nProblem 2. Five Crop Loader: \n')
-	# print(f'Accuracy for five crop = {accuracy_5_crop}')
-	# torch.cuda.empty_cache()
+	print('\nProblem 1. Normalised/ Not Normalised Custom DataLoader: \n')
+	print(f'Accuracy for not normalised = {accuracy_not_normalised}')
+	print(f'Accuracy for normalised = {accuracy_normalised}')
+
+	'''
+	Problem 2 : 5 Crops
+	'''
+	accuracy_5_crop = transform_five_crops('imagenet2500','finaldata.csv')
+
+	print('\nProblem 2. Five Crop Loader: \n')
+	print(f'Accuracy for five crop = {accuracy_5_crop}')
+	torch.cuda.empty_cache()
+	
 	'''
 	Problem 3 : Bigger Sized Images
 	'''
