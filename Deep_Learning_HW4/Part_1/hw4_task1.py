@@ -48,35 +48,23 @@ def transform_normalise(im_directory, file, normalise = False):
 	dataset = CustomLoader(im_directory, file, transformation = transformation)
 
 
-	accuracy = train_custom(dataset)
+	accuracy = eval_custom(dataset)
 	return accuracy
 
 def transform_five_crops(im_directory, file,size=280):
-	# normalizer = [transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]
-
-	# transformation = transforms.Compose([transforms.FiveCrop(224),lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops]),lambda norms: torch.stack([transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])(norm) for norm in norms])])
-	# def temp_func(crops):
-	# 	norm = [normalizer(transforms.ToTensor()(crop)) for crop in crops]
-	# 	return torch.stack(norm)
 
 	if size == 280:
 		transformation = transforms.Compose([transforms.Resize(280), transforms.FiveCrop(224), transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])), transforms.Lambda(lambda crops: torch.stack([transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(crop) for crop in crops]))])
 	else:
 		transformation = transforms.Compose([transforms.Resize(size), transforms.FiveCrop(size), transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])), transforms.Lambda(lambda crops: torch.stack([transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(crop) for crop in crops]))])
 
-	# transformation = transforms.Compose([transforms.Lambda(lambda crops:torch.stack([normalizer(transforms.ToTensor()(crop)) for crop in crops]) )])
-	# transformation = transforms.Compose([transforms.FiveCrop(224),
-	# 			lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops]),
-	# 			lambda norms: torch.stack([transforms.Normalize(mean=[0.485, 0.456, 0.406],
-	# 															std=[0.229, 0.224, 0.225])(norm) for norm in norms])])
-
 
 	dataset = CustomLoader(im_directory, file, crop_size=280, transformation = transformation)
-	accuracy = train_custom(dataset)
+	accuracy = eval_custom(dataset)
 
 	return accuracy
 
-def train_custom(dataset):
+def eval_custom(dataset):
 	# Depending on how big your gpu memory is, can change the batch_size
 	data_loader = DataLoader(dataset, batch_size=8, shuffle= True)
 	torch.cuda.empty_cache()
@@ -109,11 +97,7 @@ def train_custom(dataset):
 				pred = output.argmax(dim=1, keepdim=True)
 				correct += pred.eq(labels.view_as(pred)).sum().item()
 			loops += 1
-			# if loops >= 2500:
-			# 	break
-
-		# print(f'{loops} loops have been gone through')
-
+			
 	accuracy = (correct / len(data_loader.dataset)) * 100
 
 	return accuracy
