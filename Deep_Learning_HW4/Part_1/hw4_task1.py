@@ -30,7 +30,6 @@ For the implementation of CustomLoader please see loader/dataloader.py
 '''
 from loader.dataloader import CustomLoader
 
-
 from utils.name_pairs import extract_filename
 
 '''
@@ -41,6 +40,18 @@ def transform_normalise(im_directory, file, normalise = False):
 	'''
 	For comparison purposes, it is checked whether it is normalised or not
 	'''
+	'''
+	Function transform five_crops is a helper function to do five crops
+
+	Input: 
+	- im_directory : String (Directory of the image)
+	- file : string ( image label file .csv format)
+	- normalise : bool ( check whether the model needs to be normalised or not)
+
+	Output:
+	accuracy : float (accuracy of the model)
+	'''
+
 	if normalise == False:
 		transformation = transforms.Compose([transforms.CenterCrop(224),transforms.ToTensor()])
 	else:
@@ -52,7 +63,17 @@ def transform_normalise(im_directory, file, normalise = False):
 	return accuracy
 
 def transform_five_crops(im_directory, file,size=280):
+	'''
+	Function transform five_crops is a helper function to do five crops
 
+	Input: 
+	- im_directory : String (Directory of the image)
+	- file : string ( image label file .csv format)
+	- size : int (Specifying the size of the image)
+
+	Output:
+	accuracy : float (accuracy of the model)
+	'''
 	if size == 280:
 		transformation = transforms.Compose([transforms.Resize(280), transforms.FiveCrop(224), transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])), transforms.Lambda(lambda crops: torch.stack([transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(crop) for crop in crops]))])
 	else:
@@ -65,6 +86,15 @@ def transform_five_crops(im_directory, file,size=280):
 	return accuracy
 
 def eval_custom(dataset):
+	'''
+	Function eval_custom is a helper function to evaluate the accuracy of the model
+
+	input:
+	dataset : dataset ( Dataset customised for this task) 
+
+	output:
+	accuracy : float (accuracy of the model)
+	'''
 	# Depending on how big your gpu memory is, can change the batch_size
 	data_loader = DataLoader(dataset, batch_size=8, shuffle= True)
 	torch.cuda.empty_cache()
@@ -109,9 +139,6 @@ def run():
 	confirmation = extract_filename('output.txt','val', 'data.csv')
 	print(confirmation)
 
-	'''
-	Need to do a bit more processing sincee the top row needs to be deleted
-	'''
 	with open("data.csv",'r') as f:
 		with open("finaldata.csv",'w') as f1:
 			next(f) # skip header line

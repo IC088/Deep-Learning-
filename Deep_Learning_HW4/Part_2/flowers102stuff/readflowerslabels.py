@@ -3,24 +3,24 @@ import numpy as np
 
 def readmat():
 
- infile='imagelabels.mat'
- outfile='imagelabels.npy'
- labelsdict=scipy.io.loadmat(infile)
+	infile='imagelabels.mat'
+	outfile='imagelabels.npy'
+	labelsdict=scipy.io.loadmat(infile)
  
- print(type(labelsdict))
+	print(type(labelsdict))
  
- for keyval in labelsdict.items():
-   print(keyval[0],keyval[1])
+	for keyval in labelsdict.items():
+		print(keyval[0],keyval[1])
    
- lb=labelsdict['labels']
+	lb=labelsdict['labels']
  
- labels=np.squeeze(lb-1)
+	labels=np.squeeze(lb-1)
  
  
  
- print(np.min(labels),labels.shape, lb.shape)
+	print(np.min(labels),labels.shape, lb.shape)
  
- np.save(outfile,labels)
+	np.save(outfile,labels)
  
 if __name__=='__main__':
-  readmat()
+	readmat()
