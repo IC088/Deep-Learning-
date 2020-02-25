@@ -3,19 +3,24 @@ Ivan Christian
 
 Homework 4
 
-For this 
+Apologies for not having proper displays during run
 
 '''
 
 '''
 For testing purposes
 '''
+
+
 from utils.getimagenetclasses import test_parsesyn, testparse, test_parseclasslabel
-import os
+
 
 '''
 Importing the classes from the custom and starting the task
 '''
+
+
+import os
 import torch
 from torchvision import transforms
 import torchvision.models as models
@@ -107,7 +112,7 @@ def train_custom(dataset):
 			# if loops >= 2500:
 			# 	break
 
-		print(f'{loops} loops have been gone through')
+		# print(f'{loops} loops have been gone through')
 
 	accuracy = (correct / len(data_loader.dataset)) * 100
 
