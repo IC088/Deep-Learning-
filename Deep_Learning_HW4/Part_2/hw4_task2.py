@@ -4,9 +4,49 @@ Ivan Christian
 Homework 4 - Task 2 Transfer Learrning
 '''
 
-from loader.dataloader import CustomFlowerDataset
+
+
+from torch.utils.data import DataLoader
 
 from torchvision import transforms
+
+
+from loader.dataloader import CustomFlowerDataset
+from utils.vis import visualise_train_val_loss
+
+
+def create_loaders(im_dir, im_paths, label, train_split=0.7, val_split=0.1):
+	'''
+	Function create_loaders is a function to create data loader for training
+
+	Input:
+	- im_dir
+	- im_paths
+	- label
+	- train_split
+	- val_split
+
+	Output:
+	- train_loader
+	- val_loader
+	- test_loader
+	'''
+
+	transformation = transforms.Compose([transforms.CenterCrop(224), transforms.ToTensor()])
+
+	dataset = CustomFlowerDataset(im_dir, im_paths, label, transformation = transformation)
+
+	train_set, val_set, test_set = dataset.train_val_test_split(train_split, val_split)
+
+
+	'''
+	no need to make sure num workers = default since no lambda function exists here
+	'''
+	train_loader = DataLoader(train_set, batch_size=8, shuffle=True, num_workers=4)
+	val_loader = DataLoader(val_set, batch_size=8, shuffle=True, num_workers=4)
+	test_loader = DataLoader(test_set, batch_size=8, shuffle=True, num_workers=4)
+
+	return train_loader, val_loader, test_loader
 
 
 def train( model, device , train_loader , optimizer, epochs, loss_func ):
@@ -75,10 +115,6 @@ def validate ( model , device , val_loader , loss_func):
 	accuracy /= len(val_loader.dataset)
 	return val_loss, accuracy
 
-
-
-
-
 def test (model, device, test_loader):
 	'''
 	Function test is to test the model against the test set
@@ -99,33 +135,8 @@ def test (model, device, test_loader):
 	return accuracy 
 
 
-
-def create_loaders(im_dir, im_paths, label, train_split=0.7, val_split=0.1):
-
-	transformation = transforms.Compose([transforms.CenterCrop(224), transforms.ToTensor()])
-
-	dataset = CustomFlowerDataset(im_dir, im_paths, label, transformation = transformation)
-
-	train_set, val_set, test_set = dataset.train_val_test_split(train_split, val_split)
-
-
-	'''
-	no need to make sure num workers = default since no lambda function exists here
-	'''
-	train_loader = DataLoader(train_set, batch_size=8, shuffle=True, num_workers=4)
-	val_loader = DataLoader(val_set, batch_size=8, shuffle=True, num_workers=4)
-	test_loader = DataLoader(test_set, batch_size=8, shuffle=True, num_workers=4)
-
-	return train_loader, val_loader, test_loader
-
-
-
-
-
 def run():
 	pass
-
-
 
 
 if __name__=='__main__':
