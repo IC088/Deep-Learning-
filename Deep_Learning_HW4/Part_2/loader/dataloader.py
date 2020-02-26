@@ -7,16 +7,16 @@ import torch
 from torch.utils.data import Dataset
 from torch.utils.data import random_split
 
-
+import os
 from PIL import Image
 import numpy as np
 import pandas as pd
 
 class CustomFlowerDataset(Dataset):
-	def __init__(self, image_dir, image_paths, label_file, transformation = None):
+	def __init__(self, image_dir, image_paths, labels, transformation = None):
 		self.image_dir = image_dir
+		self.labels = np.load(labels)
 		self.image_label = self._load_paths(image_paths)
-		self.labels = label_file
 		self.transformation = transformation
 
 	def _load_paths(self, path):
@@ -71,8 +71,8 @@ class CustomFlowerDataset(Dataset):
 	def __getitem__(self, index):
 		image_path = self.image_label.index[index]
 		image = self._load_image(image_path)
-		if self.transform is not None:
-			image = self.transform(image)
+		if self.transformation is not None:
+			image = self.transformation(image)
 		label = self.labels[index]
 
 		return {'image': image,'label': label}
