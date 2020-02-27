@@ -169,7 +169,7 @@ def custom_training(im_dir, im_paths, label, mode = 3, epochs = 10):
 
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-	print(f'Starting Training with {device}.')
+	print(f'\nStarting Training with {device}.')
 
 	if mode == 1:
 		# mode 1 is to train from scracth
@@ -277,21 +277,21 @@ def run():
 	'''
 	B
 	'''
-	custom_training(data, output, label, epochs = 5)
+	custom_training(data, output, label, epochs = 8)
 	torch.cuda.empty_cache()
 	
 
 	'''
 	C
 	'''
-	custom_training(data, output, label, mode = 2,epochs = 5)
+	custom_training(data, output, label, mode = 2,epochs = 8)
 	torch.cuda.empty_cache()
 
 	'''
 	A
 	'''
 
-	custom_training(data, output, label, mode = 1, epochs = 25)
+	custom_training(data, output, label, mode = 1, epochs = 50)
 	torch.cuda.empty_cache()
 
 
