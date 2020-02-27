@@ -173,10 +173,42 @@ def custom_training(im_dir, im_paths, label, mode = 3, epochs = 10):
 
 	if mode == 1:
 		# mode 1 is to train from scracth
+		print('Training From scracth')
 		model = models.resnet18(num_classes=102).to(device)
 	elif mode == 2:
 		# mode 2 is to do training the last few layers
+
+		print('Training the last 2 layers with pre loaded weights')
+		def freeze_learning(layer):
+			for param in layer.parameters():
+				param.requires_grad = False
+
 		model = models.resnet18(pretrained=True).to(device)
+
+		'''
+		resnet 18 forward architeecture:
+		#
+		x = self.conv1(x) # Freeze
+        x = self.bn1(x) # freeze 
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x) # Freeze 
+        x = self.layer2(x) # Freeze above
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+        #
+
+		'''
+		freeze_learning(model.conv1)
+		freeze_learning(model.bn1)
+		freeze_learning(model.layer1)
+		freeze_learning(model.layer2)
+		model.fc = nn.Linear(512, 102)
 	elif mode == 3:
 		print('Loading model weights before training and training all layer.')
 		# mode 3 is to do pre trained weights
@@ -218,7 +250,14 @@ def custom_training(im_dir, im_paths, label, mode = 3, epochs = 10):
 
 	test_accuracy = test(model, device, test_loader)
 
+
+
 	print(f'Test Accuracy: {test_accuracy}')
+
+	with open(f'test_accuracy{mode}', "w") as text_file:
+		text_file.write(f'Test Accuracy: {test_accuracy}')
+	text_file.close()
+
 
 	if mode == 1:
 		visualise_train_val_loss(train_losses_vis, val_losses_vis, epochs, 'custom_full_training.png' )
@@ -236,17 +275,26 @@ def run():
 	print(confirmation)
 
 	'''
+	B
+	'''
+	custom_training(data, output, label, epochs = 5)
+	torch.cuda.empty_cache()
+	
+
+	'''
+	C
+	'''
+	custom_training(data, output, label, mode = 2,epochs = 5)
+	torch.cuda.empty_cache()
+
+	'''
 	A
 	'''
 
-	custom_training(data, output, label, mode = 1, epochs = 80)
+	custom_training(data, output, label, mode = 1, epochs = 25)
 	torch.cuda.empty_cache()
 
-	'''
-	B
-	'''
-	custom_training(data, output, label, epochs = 80)
-	torch.cuda.empty_cache()
+
 	print('Finished Training ')
 
 	
