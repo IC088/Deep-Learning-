@@ -5,11 +5,7 @@ Homework 4 - Task 2 Transfer Learrning
 '''
 
 import os
-
-try:
-	from tqdm import tqdm
-except:
-	print('Please run pip install tqdm since it\'s nice to have a progress bar')
+import numpy as np
 
 
 import torch
@@ -20,7 +16,9 @@ from torch.utils.data import DataLoader
 
 from torchvision import transforms
 import torchvision.models as models
-
+'''
+For the implementation of CustomFlowerDataset please see loader/dataloader.py
+'''
 
 from loader.dataloader import CustomFlowerDataset
 from utils.vis import visualise_train_val_loss
@@ -107,14 +105,14 @@ def validate ( model , device , val_loader , loss_func):
 	Function validate is used to check accuracy against the validation set
 	
 	Input:
-	- model
-	- device
-	- val_loader
-	- loss_func
+	- model: model
+	- device: string ( 'cuda' or 'cpu')
+	- val_loader: DataLoader (validation data loader)
+	- loss_func: (loss function chosen)
 
 	Output:
-	- val_loss
-	- accuracy
+	- val_loss: float (validation loss)
+	- accuracy: float (validation accuracy)
 	'''
 
 	model.eval().to(device)
@@ -147,7 +145,13 @@ def test (model, device, test_loader):
 
 
 	Inputs:
-	- model
+	- model: model
+	- device: string ( 'cuda' or 'cpu')
+	- test_loader: DataLoader ( test data loader)
+
+	Output:
+	- Test Accuracy: float ( test accuracy )
+
 	'''
 
 	print('Start Testing')
@@ -166,6 +170,21 @@ def test (model, device, test_loader):
 
 
 def custom_training(im_dir, im_paths, label, mode = 3, epochs = 10):
+	'''
+	Function custom training is the function that trains the model based on the mode specified
+	inputs:
+	- im_dir: string (image directory location)
+	- im_paths: string (names of the images)
+	- label: string (location of the image labels)
+	- mode: int (1,2,3) (specifying which training  mode is done (defaulted to mode 3))
+		- mode 1 : Train from scratch
+		- mode 2 : Train the last 2 layers
+		- mode 3 : Train using existing weights
+	- epochs: int (number of epochs of training)
+
+	outputs:
+	None ( but it does output a matplotlib graph ) 
+	'''
 
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -233,6 +252,7 @@ def custom_training(im_dir, im_paths, label, mode = 3, epochs = 10):
 
 	train_losses_vis = []
 	val_losses_vis = []
+	val_accuracy_list = []
 
 	for epoch in range(1, epochs + 1):
 		train_loss = train(model, device, train_loader, optimizer, epoch, loss_func)
@@ -242,6 +262,7 @@ def custom_training(im_dir, im_paths, label, mode = 3, epochs = 10):
 			torch.save(model.state_dict(), 'hw4_model.pt')
 		train_losses_vis.append(train_loss)
 		val_losses_vis.append(val_loss)
+		val_accuracy_list.append(val_accuracy)
 		print(val_accuracy)
 
 		print(f'Finished running epoch: {epoch}')
@@ -254,8 +275,8 @@ def custom_training(im_dir, im_paths, label, mode = 3, epochs = 10):
 
 	print(f'Test Accuracy: {test_accuracy}')
 
-	with open(f'test_accuracy{mode}', "w") as text_file:
-		text_file.write(f'Test Accuracy: {test_accuracy}')
+	with open(f'accuracy{mode}.md', "w") as text_file:
+		text_file.write(f'Valdiation Accuracy: {val_accuracy_list}\nValidation Accuracy Mean: {np.mean(val_accuracy_list)}\nTest Accuracy: {test_accuracy}')
 	text_file.close()
 
 

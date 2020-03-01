@@ -69,6 +69,9 @@ class CustomFlowerDataset(Dataset):
 		return length
 
 	def __getitem__(self, index):
+		'''
+		similar to task 1
+		'''
 		image_path = self.image_label.index[index]
 		image = self._load_image(image_path)
 		if self.transformation is not None:

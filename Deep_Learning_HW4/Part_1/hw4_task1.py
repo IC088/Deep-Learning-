@@ -3,8 +3,6 @@ Ivan Christian
 
 Homework 4
 
-Apologies for not having proper displays during run
-
 '''
 
 '''
