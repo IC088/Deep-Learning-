@@ -9,6 +9,26 @@ import os
 import pickle
 
 
+def visualise_loss_accuracy(scatter_ls, name):
+	'''
+	Input:
+	- scatter_ls : list (list of either loss or validation)
+
+	Output:
+	None ( plot out the validation / loss)
+	'''
+	plt.plot(scatter_ls)
+
+	directory = os.path.join('results','val_loss_graph')
+	
+
+	if not os.path.exists(directory):
+		os.makedirs(directory)
+
+	plt.savefig(os.path.join(directory, name))
+	plt.show()
+
+
 
 def visualise_from_pickle(score_file, path, dataset, Pascal, mode = 1):
 	'''
@@ -156,4 +176,4 @@ def tailAccuracy(score_file, path, dataset, Pascal):
 		os.makedirs(directory)
 
 	plt.savefig(os.path.join(directory, 'Average_tail_acc.png'))
-	# plt.show()
+	plt.show()

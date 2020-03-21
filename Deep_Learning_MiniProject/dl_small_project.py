@@ -5,12 +5,13 @@ DL Small Project
 '''
 
 from loader.loader import CustomMultiLabelLoader
-from utils.vis import visualise_from_pickle, tailAccuracy,show_images
+from utils.vis import visualise_from_pickle, tailAccuracy,show_images, visualise_loss_accuracy
 from utils.vocparseclslabels import PascalVOC
 
 
 try:
 	from tqdm import tqdm
+	from pprint import pprint
 except:
 	print('Please install tqdm >>>> pip install tqdm')
 
@@ -71,6 +72,8 @@ def train( model, device , train_loader , optimizer, epochs, loss_func ):
 	Output:
 	- train_loss : float ( average train loss )
 	'''
+
+	print('Starting Training')
 
 	model.train().to(device)
 
@@ -216,7 +219,7 @@ def image_scores(path, models, model_path, output_path, test_dataset, transforma
 			score_list.append((name, outputs))
 			bar.update()
 
-	print(score_list[:5])
+	pprint(score_list[:5])
 
 	import pickle
 
@@ -274,6 +277,19 @@ def custom_training(path,train_loader, val_loader,test_dataset,pos_weights, tran
 			val_accuracy_list.append(val_accuracy)
 
 			print(f'Finished running epoch: {epoch}')
+
+		print('Showing/Saving Tranining loss Graph')
+
+
+		visualise_loss_accuracy(train_losses_vis, 'train_loss.png')
+		
+		print('Showing/Saving Validation loss Graph')
+
+		visualise_loss_accuracy(val_losses_vis, 'val_loss.png')
+
+		print('Showing/Saving Validation Accuracy Graph')
+
+		visualise_loss_accuracy(val_accuracy_list, 'val_accuracy.png')
 		
 		print('Finished Training and Validation Process')
 
@@ -285,11 +301,17 @@ def custom_training(path,train_loader, val_loader,test_dataset,pos_weights, tran
 		image_scores(path,model, filename, scores_file, test_dataset, transformation)
 
 	pascal = PascalVOC(path)
-	
-	# top50images, top50scores = visualise_from_pickle(scores_file, path, test_dataset, pascal, mode = 1) # mode 1 : Top 50 images
-	# bot50images, bot50scores = visualise_from_pickle(scores_file, path, test_dataset, pascal, mode = 0) # mode 0 : Bottom 50 Images
 
+	print('Saving images')
+	print('Generating top 50')
+	top50images, top50scores = visualise_from_pickle(scores_file, path, test_dataset, pascal, mode = 1) # mode 1 : Top 50 images
+	print('Generating bot 50')
+	bot50images, bot50scores = visualise_from_pickle(scores_file, path, test_dataset, pascal, mode = 0) # mode 0 : Bottom 50 Images
+
+	print('Generating Tail Accurac Graph')
 	tailAccuracy(scores_file, path, test_dataset, pascal)
+
+	print('Finished. Emptying CUDA cache')
 
 
 
