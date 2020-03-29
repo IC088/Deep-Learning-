@@ -23,13 +23,6 @@ def unicodeToAscii(s, all_letters):
 		and c in all_letters
 	)
 
-# # Read a file and split into lines
-# def read_lines(filename, all_letters):
-#     lines = open(filename, encoding='utf-8').read().strip().split('\n')
-#     return [unicodeToAscii(line, all_letters) for line in lines]
-
-
-
 # Find letter index from all_letters, e.g. "a" = 0
 def letterToIndex(letter, all_letters):
 	return all_letters.find(letter)
@@ -58,4 +51,12 @@ def get_categories(path, all_letters):
 			category_lines.append([line, category, len(line)])    
 	np.random.shuffle(category_lines)
 	return category_lines, all_categories
-
+def category_from_output(output, all_categories):
+    categories = []
+    winners = []
+    for row in range(output.shape[0]):
+        top_n, top_i = output[row].topk(1)
+        winner = top_i[0].item()
+        categories.append(all_categories[winner])
+        winners.append(winner)
+    return winners, categories
