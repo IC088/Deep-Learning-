@@ -15,7 +15,7 @@ from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 class CustomLSTM(nn.Module):
 
 	'''
-	Custom LSTM modules based ont eh tutorial 
+	Custom LSTM modules based on the  tutorial 
 	'''
 	def __init__(self, vocab_size, n_layers, hidden_size, n_categories, device):
 		super(CustomLSTM, self).__init__()
