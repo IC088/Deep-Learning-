@@ -10,6 +10,10 @@ from torch.autograd import Variable
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 
 class CustomGRU(nn.Module):
+
+	'''
+	Custom GRU Model based on the tutorial
+	'''
 	def __init__(self, vocab_size, n_layers, hidden_size, n_categories, device):
 
 		super(CustomGRU, self).__init__()
@@ -29,6 +33,5 @@ class CustomGRU(nn.Module):
 		return out, hidden
 
 	def init_hidden(self, batch_size):
-		# standard way - if you call .cuda() on the model it’ll return cuda tensors instead.
 		hidden = Variable(next(self.parameters()).data.new(self.n_layers, batch_size, self.hidden_size)).to(self.device)
 		return hidden.zero_()

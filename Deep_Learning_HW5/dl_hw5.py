@@ -18,14 +18,14 @@ import torch.optim as optim
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 
 import os
-
+from random import shuffle
 import numpy as np
 
 from prep.data_preprocessing import get_categories, lineToTensor, category_from_output
 from prep.custom_lstm import CustomLSTM
 from prep.custom_gru import CustomGRU
 
-from vis.vis import train_loss_graph, val_loss_graph, val_acc_graph, test_confusion_matrix
+from vis.vis import test_confusion_matrix, plot_graph
 
 
 def pad_batch(batch,device):
@@ -36,6 +36,9 @@ def pad_batch(batch,device):
 	return [pad_sequence(batch_names).to(device), torch.stack(batch_categories).type(torch.LongTensor).to(device), torch.tensor(batch_lengths).to(device)]
 
 def get_batches(category_lines, n_categories, all_categories, n_letters, all_letters, batch_size,device):
+	'''
+	Function is to create batches given the dataset and desired batch size
+	'''
 	batch_count = 0
 	batches = []
 	batch = []
@@ -56,12 +59,42 @@ def get_batches(category_lines, n_categories, all_categories, n_letters, all_let
 
 
 
-def custom_training_lstm(all_categories , batch_size, learning_rate, n_hidden, n_layers, rnn,train_set,val_set, test_set,num_epochs=10):
+def custom_training_lstm(all_categories , batch_size, learning_rate, n_hidden, n_layers, rnn,train_set,val_set, test_set,num_epochs=8):
+	'''
+	Function to start the training process using lstm
+
+
+	Inputs: 
+	- all_categories : list (all categories available)
+	- batch_size : int ( number of batches )
+	- learning_rate : float ( learning rate )
+	- n_hidden : int ( hidden size )
+	- n_layers : int ( number of layers )
+	- rnn : nn.Module class ( LSTM or GRU )
+	- train_set : list ( train set according to batches )
+	- val_set : list ( validation set according to batches )
+	- test_set : list ( test set according to batches )
+	- num_epochs : int ( number of epochs defaulted to 8 )
+
+	Outputs :
+	- train_losses_vis: list (train losses)
+	- val_losses_vis: list (val losses)
+	- val_accuracies: list (val accuracy list)
+	- test_loss: float (average test loss)
+	- test_accuracy: float (average test accuracy)
+	- confusion: np array  (count the number of right predictions for visualisation.)
+	'''
+
 	n_categories = len(all_categories)
 	def train(rnn, optimizer, epoch,loss_func):
-
 		'''
-		Function to start the training process
+		Inputs:
+		- rnn : class (Custom class from the custom_gru)
+		- optimizer : optimizer (optimiser, in this case specified to SGD) 
+		- loss_func : function (loss function ,in this case )
+
+		Outputs :
+		- train_losses[0] : float (average loss)
 		'''
 		rnn.train()
 		correct = 0
@@ -72,8 +105,6 @@ def custom_training_lstm(all_categories , batch_size, learning_rate, n_hidden, n
 		for idx, data in enumerate(train_set):
 			optimizer.zero_grad()
 
-
-			
 			packed_names, categories, lengths = data[0], data[1], data[2]
 
 			batch_size = categories.shape[0]
@@ -90,10 +121,19 @@ def custom_training_lstm(all_categories , batch_size, learning_rate, n_hidden, n
 		accuracy = correct.item() / (len(train_set) * batch_size) * 100.
 		train_losses.append(average_loss.item())
 		print(f'Training Epoch {epoch}\t Average Loss: {average_loss}\t Accuracy: {correct}/{len(train_set) * batch_size} ({np.round(accuracy, 4)}%)')
-		return train_losses
+		return train_losses[0]
 	def validate(rnn, epoch, loss_func):
 		'''
-		Function to start validation process
+		Function to start validation process as in to calculate the val loss and val accuracy
+
+		Inputs: 
+		- rnn : class (Custom class from custom_gru)
+		- epoch : int (current number of epoch)
+		- loss_func : loss function ( CrossEntropyLoss )
+
+		Outputs : 
+		- val_losses : list ( validation losses list )
+		- val_Acc : list (Validation accuracy list)
 		'''
 		rnn.eval()
 		correct = 0
@@ -118,12 +158,22 @@ def custom_training_lstm(all_categories , batch_size, learning_rate, n_hidden, n
 		val_losses.append(average_loss.item())
 		val_acc.append(accuracy)
 		print(f'Validation Epoch {epoch}\t Average Loss: {average_loss}\t Accuracy: {correct}/{len(val_set) * batch_size} ({np.round(accuracy, 4)}%)')
-		return val_losses, val_acc
+		return val_losses[0], val_acc[0]
 
 	def test(rnn, loss_func, n_categories):
 
 		'''
 		Function to start the test set
+
+		Inputs:
+		- rnn: class (Custom LSTM class defined in custom_lstm)
+		- loss_func : loss function ( loss function to calc the loss, in this case is the CrossEntropyLoss)
+		- n_categories : int ( number of categories which is 18)
+
+		Output:
+		- average_loss : float (average test loss)
+		- accracy : float (Average test accuracy for the model)
+		- confusion : tensor ( confusion matrix for visualisation)
 		'''
 		rnn.eval()
 
@@ -168,20 +218,58 @@ def custom_training_lstm(all_categories , batch_size, learning_rate, n_hidden, n
 	val_losses_vis = []
 
 	for epoch in range(1, num_epochs + 1):
-		train_losses_vis = train(rnn, optimizer, epoch, loss_func)
-		val_losses_vis, val_accuracies = validate(rnn, epoch, loss_func)
+		train_loss = train(rnn, optimizer, epoch, loss_func)
+
+		val_loss, val_acc = validate(rnn, epoch, loss_func)
+		train_losses_vis.append(train_loss)
+		val_losses_vis.append(val_loss)
+
+		val_accuracies.append(val_acc)
 
 	test_loss, test_accuracy, confusion = test(rnn, loss_func, n_categories)
 
 	return train_losses_vis, val_losses_vis, val_accuracies, test_loss, test_accuracy, confusion
 
 
-def custom_training_gru(all_categories , batch_size, learning_rate, n_hidden, n_layers, rnn,train_set,val_set, test_set,num_epochs=10):
+def custom_training_gru(all_categories , batch_size, learning_rate, n_hidden, n_layers, rnn,train_set,val_set, test_set,num_epochs=8):
+	'''
+	Function to train using gru
+
+	Inputs: 
+	- all_categories : list (all categories available)
+	- batch_size : int ( number of batches )
+	- learning_rate : float ( learning rate )
+	- n_hidden : int ( hidden size )
+	- n_layers : int ( number of layers )
+	- rnn : nn.Module class ( LSTM or GRU )
+	- train_set : list ( train set according to batches )
+	- val_set : list ( validation set according to batches )
+	- test_set : list ( test set according to batches )
+	- num_epochs : int ( number of epochs defaulted to 8 )
+
+	Outputs :
+	- train_losses_vis: list (train losses)
+	- val_losses_vis: list (val losses)
+	- val_accuracies: list (val accuracy list)
+	- test_loss: float (average test loss)
+	- test_accuracy: float (average test accuracy)
+	- confusion: np array  (count the number of right predictions for visualisation.)
+	'''
+
+
 	n_categories = len(all_categories)
 	def train(rnn, optimizer, epoch,loss_func):
 
 		'''
 		Function to start the training process
+
+		Inputs:
+		- rnn : class (Custom class from the custom_gru)
+		- optimizer : optimizer (optimiser, in this case specified to SGD) 
+		- loss_func : function (loss function ,in this case )
+
+		Outputs :
+		- train_losses[0] : float (average loss)
 		'''
 		rnn.train()
 		correct = 0
@@ -208,10 +296,19 @@ def custom_training_gru(all_categories , batch_size, learning_rate, n_hidden, n_
 		accuracy = correct.item() / (len(train_set) * batch_size) * 100.
 		train_losses.append(average_loss.item())
 		print(f'Training Epoch {epoch}\t Average Loss: {average_loss}\t Accuracy: {correct}/{len(train_set) * batch_size} ({np.round(accuracy, 4)}%)')
-		return train_losses
+		return train_losses[0]
 	def validate(rnn, epoch, loss_func):
 		'''
-		Function to start validation process
+		Function to start validation process as in to calculate the val loss and val accuracy
+
+		Inputs: 
+		- rnn : class (Custom class from custom_gru)
+		- epoch : int (current number of epoch)
+		- loss_func : loss function ( CrossEntropyLoss )
+
+		Outputs : 
+		- val_losses : list ( validation losses list )
+		- val_Acc : list (Validation accuracy list)
 		'''
 		rnn.eval()
 		correct = 0
@@ -236,12 +333,22 @@ def custom_training_gru(all_categories , batch_size, learning_rate, n_hidden, n_
 		val_losses.append(average_loss.item())
 		val_acc.append(accuracy)
 		print(f'Validation Epoch {epoch}\t Average Loss: {average_loss}\t Accuracy: {correct}/{len(val_set) * batch_size} ({np.round(accuracy, 4)}%)')
-		return val_losses, val_acc
+		return val_losses[0], val_acc[0]
 
 	def test(rnn, loss_func, n_categories):
 
 		'''
 		Function to start the test set
+
+		Inputs:
+		- rnn: class (Custom GRU class defined in custom_gru)
+		- loss_func : loss function ( loss function to calc the loss, in this case is the CrossEntropyLoss)
+		- n_categories : int ( number of categories which is 18)
+
+		Output:
+		- average_loss : float (average test loss)
+		- accracy : float (Average test accuracy for the model)
+		- confusion : tensor ( confusion matrix for visualisation)
 		'''
 		rnn.eval()
 
@@ -274,9 +381,6 @@ def custom_training_gru(all_categories , batch_size, learning_rate, n_hidden, n_
 
 		return average_loss, accuracy, confusion
 
-
-
-
 	loss_func = nn.CrossEntropyLoss()
 
 	optimizer = optim.SGD(rnn.parameters(), lr=learning_rate)
@@ -286,8 +390,14 @@ def custom_training_gru(all_categories , batch_size, learning_rate, n_hidden, n_
 	val_losses_vis = []
 
 	for epoch in range(1, num_epochs + 1):
-		train_losses_vis = train(rnn, optimizer, epoch, loss_func)
-		val_losses_vis, val_accuracies = validate(rnn, epoch, loss_func)
+		
+		train_loss = train(rnn, optimizer, epoch, loss_func)
+
+		val_loss, val_acc = validate(rnn, epoch, loss_func)
+		train_losses_vis.append(train_loss)
+		val_losses_vis.append(val_loss)
+
+		val_accuracies.append(val_acc)
 
 	test_loss, test_accuracy, confusion = test(rnn, loss_func, n_categories)
 
@@ -298,42 +408,46 @@ def custom_training_gru(all_categories , batch_size, learning_rate, n_hidden, n_
 def run():
 
 	'''
-	Main function to run the task 
+	Main function to run the tasks 
 	'''
-	lr = 0.01
-
-	batch_size = 1
-
-	n_layers_list = [1,2]
-
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 	path = os.path.join('data', 'names', '*.txt')
 	all_letters = string.ascii_letters + " .,;'"
 
 	category_lines, all_categories = get_categories(path,all_letters)
 
+	shuffle(category_lines) #Further shuffle the 
+
 	n_letters = len(all_letters)
 	n_categories = len(all_categories)
+	lr = 0.05
+	torch.cuda.empty_cache()
 
-	hidden_sizes = [200 , 500]
+	# # TASK 1
+
+	# # LSTM with different n_layers and different hidden_sizes, batch size = 1.
+
+	# batch_size = 1
+
+	# n_layers_list = [1,2]
+
+	# hidden_sizes = [200 , 500]
+
+	# # 0.8 - 0.1 - 0.1 train val test split
+	# # Total Length of category_lines = 20047
+	# # floor(0.8*20047) = 16059
+
+	# train_set = get_batches(category_lines[:16058], n_categories, all_categories, n_letters, all_letters, batch_size,device)
+	# val_set = get_batches(category_lines[16058:18066], n_categories, all_categories, n_letters, all_letters, batch_size,device)
+	# test_set = get_batches(category_lines[18066:], n_categories, all_categories, n_letters, all_letters, batch_size, device)
 
 
-	# 0.7 - 0.1 - 0.2 train val test split
-
-	train_set = get_batches(category_lines[:14051], n_categories, all_categories, n_letters, all_letters, batch_size,device)
-	val_set = get_batches(category_lines[14051:16058], n_categories, all_categories, n_letters, all_letters, batch_size,device)
-	test_set = get_batches(category_lines[16058:], n_categories, all_categories, n_letters, all_letters, batch_size, device)
-
-
-	#TASK 1
-
-	# LSTM with different n_layers and different hidden_sizes, batch size = 1.
-
-	# n_type ='lstm'
 
 	# train_history = []
-	# test_history = []
 	# val_history = []
+	# test_history = []
+
+	# n_type ='lstm'
 
 	# for n_layers in n_layers_list:
 	# 	for h_size in hidden_sizes:
@@ -343,48 +457,89 @@ def run():
 	# 		lstm = CustomLSTM(n_letters, n_layers, h_size, n_categories, device).to(device)
 
 	# 		train_losses_vis, val_losses_vis, val_accuracies, test_loss, test_accuracy, confusion = custom_training_lstm(all_categories,batch_size,lr, h_size, n_layers, lstm, train_set,val_set, test_set)
+	# 		print(f'Train Loss : {train_losses_vis}\n Val Loss : {val_losses_vis}\n Val Accuracy: {val_accuracies}\n Test Loss : {test_loss}\n Test Accuracy: {test_accuracy}')
 
 	# 		train_history.append(train_losses_vis)
 	# 		val_history.append([val_losses_vis, val_accuracies])
 	# 		test_history.append([test_loss.item(), test_accuracy, (batch_size, n_layers, h_size)])
 
 	# 		test_confusion_matrix(all_categories,confusion, batch_size, n_layers, h_size, n_type)
+	# 		torch.cuda.empty_cache()
 
-	# # train_loss_graph(train_history,batch_size, n_layers, h_size, n_type)
-	# # val_loss_graph(val_history[0],batch_size, n_layers, h_size, n_type)
-	# # val_acc_graph(val_history[1],batch_size, n_layers, h_size, n_type)
+	# # TASK 1: GRU
 
+	# # GRU with hidden size 200 and layers = 1, batch size 1
 
+	# n_layers = 1
+	# h_size = 200
+	# n_type = 'gru'
 
-	# TASK 1: GRU
+	# gru = CustomGRU(n_letters, n_layers, h_size, n_categories, device).to(device)
+	# train_losses_vis, val_losses_vis, val_accuracies, test_loss, test_accuracy, confusion = custom_training_gru(all_categories,batch_size,lr, h_size, n_layers, gru, train_set,val_set, test_set)
 
-	# GRU with hidden size 200 and layers = 1, batch size 1
+	# test_confusion_matrix(all_categories,confusion, batch_size, n_layers, h_size, n_type)
+	# torch.cuda.empty_cache()
 
-	n_layers = 1
-	h_size = 200
-	n_type = 'gru'
+	# saved_file = f'GRU \nTrain Loss : {train_losses_vis}\n Val Loss : {val_losses_vis}\n Val Accuracy: {val_accuracies}\n Test Loss : {test_loss}\n Test Accuracy: {test_accuracy}'
 
-	gru = CustomGRU(n_letters, n_layers, h_size, n_categories, device).to(device)
-	train_losses_vis, val_losses_vis, val_accuracies, test_loss, test_accuracy, confusion = custom_training_gru(all_categories,batch_size,lr, h_size, n_layers, gru, train_set,val_set, test_set)
-
-
-	print('Train Loss')
-	print(f'Train Loss : {train_losses_vis}\n Val Loss : {val_losses_vis}\n Val Accuracy: {val_accuracies}\n Test Loss : {test_loss}\n Test Accuracy: {test_accuracy}')
-
-
-	# TASK 2 : LSTM with different batch sizes
-
-	batch_size_list = [10,50]
-
-	for b_size in batch_size_list:
-		train_set = get_batches(category_lines[:14051], n_categories, all_categories, n_letters, all_letters, b_size,device)
-		val_set = get_batches(category_lines[14051:16058], n_categories, all_categories, n_letters, all_letters, b_size,device)
-		test_set = get_batches(category_lines[16058:], n_categories, all_categories, n_letters, all_letters, b_size, device)
+	# print(saved_file)
+	# save_to_text(saved_file, n_type, n_layers, h_size, batch_size)
 
 
+	# TASK 2 : LSTM with different batch sizes make graph based on the test loss, test accuracy, and train loss
+	
+	torch.cuda.empty_cache()
+
+	batch_size_list = [(1,8),(10,8),(50,8)]
 
 
-	# TASK 2 : LSTM 
+	print(f'STARTING TASK 2 for batch sizes 1,10,50')
+	h_size = 500
+	n_layers = 2
+	n_type = 'lstm'
+	train_loss_history = []
+	test_loss_history = []
+	test_acc_history = []
+	val_loss_history = []
+	val_acc_history = []
+
+	for b_size, epoch in batch_size_list:
+		print(f'Doing LSTM with {n_layers} layers and {h_size} hidden sizes. Batch_size = {b_size}')
+
+
+		train_set = get_batches(category_lines[:16058], n_categories, all_categories, n_letters, all_letters, b_size,device)
+		val_set = get_batches(category_lines[16058:18066], n_categories, all_categories, n_letters, all_letters, b_size,device)
+		test_set = get_batches(category_lines[18066:], n_categories, all_categories, n_letters, all_letters, b_size, device)
+		lstm = CustomLSTM(n_letters, n_layers, h_size, n_categories, device).to(device)
+
+		train_losses_vis, val_losses_vis, val_accuracies, test_loss, test_accuracy, confusion = custom_training_lstm(all_categories,b_size,lr, h_size, n_layers, lstm, train_set,val_set, test_set, num_epochs=epoch)
+		
+		saved_file = f'Train Loss : {train_losses_vis}\nVal Loss : {val_losses_vis}\nVal Accuracy: {val_accuracies}\nTest Loss : {test_loss}\nTest Accuracy: {test_accuracy}'
+		print(saved_file)
+
+		save_to_text(saved_file, n_type, n_layers, h_size, b_size)
+
+		torch.cuda.empty_cache()
+		test_confusion_matrix(all_categories,confusion, b_size, n_layers, h_size, n_type)
+		
+
+		for i in range(len(train_losses_vis)):
+			train_loss_history.append((b_size, train_losses_vis[i]))
+			val_loss_history.append((b_size, val_losses_vis[i]))
+			val_acc_history.append((b_size, val_accuracies[i]))
+		
+
+		test_loss_history.append((b_size, float(test_loss)))
+		test_acc_history.append((b_size, test_accuracy))
+		torch.cuda.empty_cache()
+	
+	print(test_loss_history)
+	print(train_loss_history)
+	print(test_acc_history)
+	
+	plot_graph(test_acc_history, n_type, 'Graph of Test Accuracy against batch size', 'Test Accuracy')
+	plot_graph(test_loss_history, n_type, 'Graph of Test Loss against batch size', 'Test Loss')
+	plot_graph(train_loss_history, n_type, 'Graph of Train Loss against batch size', 'Train Loss')
 
 if __name__ == '__main__':
 	run()

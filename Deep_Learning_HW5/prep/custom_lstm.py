@@ -13,6 +13,10 @@ from torch.autograd import Variable
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 
 class CustomLSTM(nn.Module):
+
+	'''
+	Custom LSTM modules based ont eh tutorial 
+	'''
 	def __init__(self, vocab_size, n_layers, hidden_size, n_categories, device):
 		super(CustomLSTM, self).__init__()
 
@@ -24,7 +28,7 @@ class CustomLSTM(nn.Module):
 
 		
 	def forward(self, input_item, lengths, states):
-		hidden, cell = states[0], states[1]
+		hidden, cell = states[0].to(self.device), states[1].to(self.device)
 		inputs = pack_padded_sequence(input_item, lengths)
 		out, (hidden, cell) = self.lstm(inputs.to(self.device), (hidden.to(self.device), cell.to(self.device)))
 		out = self.fc(hidden[-1]) 
