@@ -51,6 +51,8 @@ def get_categories(path, all_letters):
 			category_lines.append([line, category, len(line)])    
 	np.random.shuffle(category_lines)
 	return category_lines, all_categories
+
+	
 def category_from_output(output, all_categories):
     categories = []
     winners = []
