@@ -54,11 +54,11 @@ def get_categories(path, all_letters):
 
 	
 def category_from_output(output, all_categories):
-    categories = []
-    winners = []
-    for row in range(output.shape[0]):
-        top_n, top_i = output[row].topk(1)
-        winner = top_i[0].item()
-        categories.append(all_categories[winner])
-        winners.append(winner)
-    return winners, categories
+	categories = []
+	winners = []
+	for row in range(output.shape[0]):
+		top_n, top_i = output[row].topk(1)
+		winner = top_i[0].item()
+		categories.append(all_categories[winner])
+		winners.append(winner)
+	return winners, categories
